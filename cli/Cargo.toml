@@ -1,0 +1,9 @@
+[package]
+name = "sysperf-svr-cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sysperf-svr-ports = { path = "../ports" }
+sysperf-svr-adapters = { path = "../adapters" }
+log = "0.4.26"
