@@ -1,0 +1,12 @@
+[package]
+name = "sysperf-svr-adapters"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+chrono = "0.4.40"
+colored = "3.0.0"
+fern = "0.7.1"
+log = "0.4.26"
+sysperf-svr-ports = { path = "../ports"}
+
