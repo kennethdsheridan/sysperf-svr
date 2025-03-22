@@ -1,0 +1,25 @@
+[package]
+name = "sysperf-svr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.97"
+chrono = "0.4.40"
+clap = "4.5.32"
+colored = "3.0.0"
+dialoguer = "0.11.0"
+fern = "0.7.1"
+log = "0.4.26"
+
+[lib]
+name = "sysperf_svr"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sysperf-svr"
+path = "src/main.rs"
+
+[features]
+default = []
+wasm = []
