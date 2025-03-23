@@ -1,9 +1,10 @@
 mod cli_struct;
+mod commands;
 
 use self::cli_struct::{Cli, Commands};
 use crate::adapters::database_adapter::DatabaseAdapter;
 use crate::adapters::{benchmark_adapter::BenchmarkAdapter, metrics_adapter::MetricsAdatper};
-use crate::application::Application;
+use crate::application::{self, Application};
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
@@ -41,67 +42,15 @@ pub fn run() -> Result<()> {
     // handle subcommand or run interactive mode
     match &cli.command {
         Some(Commands::Benchmark { tool }) => {
-            run_benchmark(&app, tool)?;
+            commands::run_benchmark(&app, tool)?;
         }
         Some(Commands::Collect { metric }) => {
-            collect_metrics(&app, &metric)?;
+            commands::collect_metrics(&app, &metric)?;
         }
         None => {
-            run_interactive(&app)?;
+            commands::run_interactive(&app)?;
         }
     }
     println!("CLI is running");
-    Ok(())
-}
-
-fn run_benchmark(app: &Application, tool: &Option<String) -> Result<()> {
-    // implement benchmarking logic here
-    Ok(())
-}
-
-fn collect_metrics(app: &Application, metric: &Option<String>) -> Result<()> {
-    // implement metric collection logic here
-    Ok(())  
-}
-
-fn run_interactive(app: &Application) -> Result<()> {
-    println!("{}", "Welcome to the System Performance Tool!".green().bold());
-
-    loop {
-        let selection = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("What would you like to do?")
-            .default(0)
-            .items(&["Run Benchmarks", "Collect Metrics", "Exit"])
-            .interact()?;
-
-        match selection {
-            0 => run_interactive_benchmark(app)?,
-            1 => run_interactive_metrics(app)?,
-            2 => break,
-            _ => unreachable!(),
-        }
-
-        if !Confirm::with_theme(&ColorfulTheme::default())
-            .with_prompt("Do you want to perform another action?")
-            .default(true)
-            .interact()?
-        {
-            break;
-        }
-    }
-
-    println!("{}", "Thank you for using the System Performance Tool!".green().bold());
-    Ok(())
-}
-
-fn run_interactive_benchmark(app: &Application) -> Result<()> {
-    // Implementation for interactive benchmark selection
-    // ...
-    Ok(())
-}
-
-fn run_interactive_metrics(app: &Application) -> Result<()> {
-    // Implementation for interactive metrics selection
-    // ...
     Ok(())
 }
