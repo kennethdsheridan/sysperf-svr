@@ -7,9 +7,9 @@ edition = "2021"
 # Existing dependencies...
 
 # System metrics collection
-sysinfo = "0.29.10"        # For CPU, memory, disk usage
-procfs = "0.15.1"          # Linux-specific detailed metrics
-heim = "0.1.0-rc.1"        # Cross-platform system information
+sysinfo = "0.33.1"        # For CPU, memory, disk usage
+procfs = "0.17.0"          # Linux-specific detailed metrics
+heim = "0.0.11"        # Cross-platform system information
 cpu-time = "1.0.0"         # CPU time measurements
 
 # Performance measurement
