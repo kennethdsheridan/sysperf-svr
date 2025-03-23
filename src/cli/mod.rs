@@ -7,7 +7,7 @@ use crate::application::Application;
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
-use dialoguer::{theme::ColorfulTheme; Confirm, Select};
+use dialoguer::{theme::ColorfulTheme, Confirm, Select};
 
 /// Initializes and runs the CLI application.
 ///
@@ -44,7 +44,7 @@ pub fn run() -> Result<()> {
             run_benchmark(&app, tool)?;
         }
         Some(Commands::Collect { metric }) => {
-            collect_metrics(&app, metric)?;
+            collect_metrics(&app, &metric)?;
         }
         None => {
             run_interactive(&app)?;
