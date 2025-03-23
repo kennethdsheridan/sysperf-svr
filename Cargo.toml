@@ -4,22 +4,35 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.97"
-chrono = "0.4.40"
-clap = "4.5.32"
-colored = "3.0.0"
-dialoguer = "0.11.0"
-fern = "0.7.1"
-log = "0.4.26"
+# Existing dependencies...
 
-[lib]
-name = "sysperf_svr"
-path = "src/lib.rs"
+# System metrics collection
+sysinfo = "0.29.10"        # For CPU, memory, disk usage
+procfs = "0.15.1"          # Linux-specific detailed metrics
+heim = "0.1.0-rc.1"        # Cross-platform system information
+cpu-time = "1.0.0"         # CPU time measurements
 
-[[bin]]
-name = "sysperf-svr"
-path = "src/main.rs"
+# Performance measurement
+criterion = "0.5.1"        # Statistical benchmarking
+iai = "0.1"               # Cycle-accurate benchmarking
+perf-event = "0.4"        # Linux perf events API
 
-[features]
-default = []
-wasm = []
+# Async runtime (if needed)
+tokio = { version = "1.32", features = ["full"] }
+
+# Visualization and reporting
+plotters = "0.3"          # For generating performance graphs
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"        # For JSON output format
+
+# Hardware-specific metrics
+raw-cpuid = "10.6"        # CPU information and features
+hwloc = "0.5"            # Hardware topology detection
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name = "benchmarks"
+harness = false
+
