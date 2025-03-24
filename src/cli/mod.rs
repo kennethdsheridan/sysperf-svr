@@ -33,6 +33,7 @@ pub fn run() -> Result<()> {
         vec![String::from("--default-arg")], // Default arguments
         Arc::new(FernLogger::new()),
     );
+
     let metrics = MetricsAdapter::new();
 
     // create application instance

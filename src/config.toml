@@ -1,0 +1,4 @@
+[general]
+log_directory = "./sysperf_logs"
+log_level = "Debug" # Can be: Debug, Info, Warn, Trace, or Error
+database_path = "./database.db" 
