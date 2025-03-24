@@ -25,7 +25,10 @@ pub fn run() -> Result<()> {
 
     // setup the adapters
     let db = DatabaseAdapter::new();
-    let benchmark = BenchmarkAdapter;
+    let benchmark = BenchmarkAdapter::new(
+        String::from("benchmark_command"),  // Default command
+        vec![String::from("--default-arg")], // Default arguments
+    );
     let metrics = MetricsAdapter::new();
 
     // create application instance
@@ -42,13 +45,13 @@ pub fn run() -> Result<()> {
     // handle subcommand or run interactive mode
     match &cli.command {
         Some(Commands::Benchmark { tool }) => {
-            commands::run_benchmark(&app, tool)?;
+            commands::run_benchmark(&mut app, tool)?;
         }
         Some(Commands::Collect { metric }) => {
-            commands::collect_metrics(&app, &metric)?;
+            commands::collect_metrics(&mut app, &metric)?;
         }
         None => {
-            commands::run_interactive(&app)?;
+            commands::run_interactive(&mut app)?;
         }
     }
     println!("CLI is running");

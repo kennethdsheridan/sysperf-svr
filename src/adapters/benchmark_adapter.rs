@@ -1,6 +1,6 @@
+use crate::ports::benchmark_port::BenchmarkPort;
 use anyhow::Result;
 use std::process::Command;
-use crate::ports::benchmark_port::BenchmarkPort;
 
 pub struct BenchmarkAdapter {
     command: String,
@@ -14,13 +14,11 @@ impl BenchmarkAdapter {
 }
 
 impl BenchmarkPort for BenchmarkAdapter {
-    fn run(&self) -> Result<String> {
-        let output = Command::new(&self.command)
-            .args(&self.args)
-            .output()?;
+    fn run(&self) -> Result<()> {
+        let output = Command::new(&self.command).args(&self.args).output()?;
 
         if output.status.success() {
-            Ok(String::from_utf8(output.stdout)?)
+            Ok(())
         } else {
             Err(anyhow::anyhow!(
                 "Benchmark command failed: {}",
@@ -34,4 +32,3 @@ impl BenchmarkPort for BenchmarkAdapter {
         Ok(String::from("fio output"))
     }
 }
-    
