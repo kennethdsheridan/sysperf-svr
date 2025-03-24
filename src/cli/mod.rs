@@ -30,7 +30,7 @@ pub fn run() -> Result<()> {
     let db = DatabaseAdapter::new();
     let benchmark = BenchmarkAdapter::new(
         String::from("fio"),   // Default command
-        vec![String::from("--default-arg")], // Default arguments
+        vec![String::from("--version")], // Default arguments
         Arc::new(FernLogger::new()),
     );
 
@@ -50,7 +50,6 @@ pub fn run() -> Result<()> {
     // handle subcommand or run interactive mode
     match &cli.command {
         Some(Commands::Benchmark { tool }) => {
-            log::debug!("Running benchmark command");
             commands::run_benchmark(&mut app, tool)?;
         }
         Some(Commands::Collect { metric }) => {
