@@ -1,10 +1,13 @@
 mod cli_struct;
 mod commands;
 
+use std::sync::Arc;
 use self::cli_struct::{Cli, Commands};
 use crate::adapters::database_adapter::DatabaseAdapter;
+use crate::adapters::log_adapter::{init, FernLogger};
 use crate::adapters::{benchmark_adapter::BenchmarkAdapter, metrics_adapter::MetricsAdapter};
 use crate::application::Application;
+use crate::ports::log_port::LoggerPort;
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
@@ -26,8 +29,9 @@ pub fn run() -> Result<()> {
     // setup the adapters
     let db = DatabaseAdapter::new();
     let benchmark = BenchmarkAdapter::new(
-        String::from("benchmark_command"),  // Default command
+        String::from("benchmark_command"),   // Default command
         vec![String::from("--default-arg")], // Default arguments
+        Arc::new(FernLogger::new()),
     );
     let metrics = MetricsAdapter::new();
 
