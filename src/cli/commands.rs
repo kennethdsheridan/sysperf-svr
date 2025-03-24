@@ -11,6 +11,7 @@ pub fn run_benchmark<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort>(
     app: &mut Application<DB, B, M>,
     tool: &Option<String>,
 ) -> Result<()> {
+    log::debug!("Running benchmark...");
     println!("Benchmark completed succesfully!");
     Ok(())
 }
