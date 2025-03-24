@@ -24,7 +24,7 @@ use dialoguer::{theme::ColorfulTheme, Confirm, Select};
 /// - `Ok(())` if the application runs successfully.
 /// - `Err(e)` if an error occurs during execution.
 pub fn run() -> Result<()> {
-    print!("Running CLI...");
+    println!("Running CLI...");
     let cli = Cli::parse();
 
     // setup the adapters
@@ -59,6 +59,6 @@ pub fn run() -> Result<()> {
             commands::run_interactive(&mut app)?;
         }
     }
-    println!("CLI ran successfully");
+    println!("The CLI ran successfully");
     Ok(())
 }

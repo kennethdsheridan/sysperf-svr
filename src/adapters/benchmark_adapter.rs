@@ -135,7 +135,7 @@ impl BenchmarkPort for BenchmarkAdapter {
 
         // Process command output
         if output.status.success() {
-            self.logger.log_info("Benchmark completed successfully");
+            self.logger.log_info("\nBenchmark completed successfully");
             self.logger
                 .log_debug(&self.format_output(&output.stdout, false));
             Ok(())
