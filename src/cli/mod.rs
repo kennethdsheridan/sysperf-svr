@@ -28,12 +28,7 @@ pub fn run() -> Result<()> {
 
     // setup the adapters
     let db = DatabaseAdapter::new();
-    let benchmark = BenchmarkAdapter::new(
-        String::from("fio"),   // Default command
-        vec![String::from("--version")], // Default arguments
-        Arc::new(FernLogger::new()),
-    );
-
+    let benchmark = BenchmarkAdapter::new();
     let metrics = MetricsAdapter::new();
 
     // create application instance
