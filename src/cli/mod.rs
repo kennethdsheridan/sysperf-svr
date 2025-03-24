@@ -3,8 +3,8 @@ mod commands;
 
 use self::cli_struct::{Cli, Commands};
 use crate::adapters::database_adapter::DatabaseAdapter;
-use crate::adapters::{benchmark_adapter::BenchmarkAdapter, metrics_adapter::MetricsAdatper};
-use crate::application::{self, Application};
+use crate::adapters::{benchmark_adapter::BenchmarkAdapter, metrics_adapter::MetricsAdapter};
+use crate::application::Application;
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
@@ -21,12 +21,12 @@ use dialoguer::{theme::ColorfulTheme, Confirm, Select};
 /// - `Ok(())` if the application runs successfully.
 /// - `Err(e)` if an error occurs during execution.
 pub fn run() -> Result<()> {
-    let cli = Cli.parse();
+    let cli = Cli::parse();
 
     // setup the adapters
     let db = DatabaseAdapter::new();
     let benchmark = BenchmarkAdapter;
-    let metrics = MetricsAdatper::new();
+    let metrics = MetricsAdapter::new();
 
     // create application instance
     let mut app = Application::new(db, benchmark, metrics);
