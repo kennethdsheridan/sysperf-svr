@@ -1,4 +1,109 @@
+# System Performance Server Configuration
+# -------------------------------------
+#
+# Main configuration file for the sysperf-svr service, combining general
+# settings and storage performance testing configurations.
+
 [general]
 log_directory = "./sysperf_logs"
 log_level = "Debug" # Can be: Debug, Info, Warn, Trace, or Error
-database_path = "./database.db" 
+database_path = "./database.db"
+
+# Storage Performance Testing Configuration
+# --------------------------------------
+
+[storage]
+test_directory = "./storage_tests"
+max_concurrent_tests = 4
+default_timeout = 3600
+
+# Storage Targets Definition
+# ------------------------
+
+[[storage.targets]]
+name = "nvme_direct"  # Direct NVMe device testing
+path = "/dev/nvme0n1"
+type = "block_device"
+options = { 
+    scheduler = "none",
+    numa_node = "0",
+    rotational = false
+}
+
+[[storage.targets]]
+name = "dm_volume"  # Device mapper volume
+path = "/dev/dm-0"
+type = "device_mapper"
+options = { 
+    dm_name = "data-volume",
+    scheduler = "mq-deadline"
+}
+
+[[storage.targets]]
+name = "xfs_mount"  # Filesystem mount point
+path = "/mnt/data"
+type = "filesystem"
+options = { 
+    fs_type = "xfs",
+    mount_options = "noatime,nodiratime",
+    direct_io = true
+}
+
+[[storage.targets]]
+name = "raid_array"  # Software RAID device
+path = "/dev/md0"
+type = "block_device"
+options = {
+    scheduler = "none",
+    raid_level = "raid0",
+    stripe_size = "256k"
+}
+
+# FIO Job Profiles
+# --------------
+
+[storage.fio.profiles.block_device_test]
+description = "Block device performance test"
+ioengine = "io_uring"
+rw = "randrw"
+rwmixread = 70
+bs = "4k,128k"  # Test multiple block sizes
+size = "10G"
+numjobs = 4
+iodepth = 64
+direct = true
+
+[storage.fio.profiles.filesystem_test]
+description = "Filesystem performance test"
+ioengine = "libaio"
+rw = "randrw"
+rwmixread = 70
+bs = "16k"
+size = "1G"
+numjobs = 8
+iodepth = 32
+direct = true
+buffered = false
+verify = "md5"  # Add data verification for filesystem tests
+
+[storage.fio.profiles.device_mapper_test]
+description = "Device mapper volume test"
+ioengine = "io_uring"
+rw = "randwrite"
+bs = "1M"
+size = "5G"
+numjobs = 2
+iodepth = 16
+direct = true
+
+# Default FIO settings
+[storage.fio.defaults]
+runtime = 60
+time_based = true
+group_reporting = true
+randomize = 1
+write_bw_log = true
+write_lat_log = true
+write_iops_log = true
+log_avg_msec = 1000
+

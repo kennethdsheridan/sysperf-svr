@@ -87,3 +87,147 @@ pub struct FioJobConfig {
     #[serde(flatten)]
     pub extra_options: HashMap<String, String>,
 }
+
+/// Storage target configuration for FIO testing.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StorageTarget {
+    /// Path to the target (file, device, or directory)
+    pub path: PathBuf,
+
+    /// Type of the target ("file", "device", "directory")
+    pub target_type: String,
+
+    /// Target-specific options
+    #[serde(default)]
+    pub options: HashMap<String, String>,
+}
+
+/// Statistics for a specific type of I/O operation.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct IoStats {
+    /// Operations per second
+    pub iops: f64,
+    /// Bandwidth in megabytes per second
+    pub bandwidth_mb: f64,
+    /// Average latency in microseconds
+    pub lat_usec: f64,
+    /// 99th percentile latency in microseconds
+    pub lat_usec_p99: f64,
+    /// Maximum observed latency in microseconds
+    pub lat_usec_max: f64,
+}
+
+/// Results from a FIO benchmark run.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FioResult {
+    /// Read operation statistics
+    pub read: IoStats,
+    /// Write operation statistics
+    pub write: IoStats,
+    /// Error information if the benchmark failed
+    pub error: Option<String>,
+}
+
+impl Default for FioJobConfig {
+    fn default() -> Self {
+        Self {
+            ioengine: IoEngine::Sync,
+            rw: IoPattern::Read,
+            bs: String::from("4k"),
+            size: String::from("1G"),
+            numjobs: 1,
+            iodepth: 1,
+            direct: false,
+            buffered: true,
+            rwmixread: None,
+            extra_options: HashMap::new(),
+        }
+    }
+}
+
+impl Default for IoStats {
+    fn default() -> Self {
+        Self {
+            iops: 0.0,
+            bandwidth_mb: 0.0,
+            lat_usec: 0.0,
+            lat_usec_p99: 0.0,
+            lat_usec_max: 0.0,
+        }
+    }
+}
+
+impl Default for FioResult {
+    fn default() -> Self {
+        Self {
+            read: IoStats::default(),
+            write: IoStats::default(),
+            error: None,
+        }
+    }
+}
+
+impl FioJobConfig {
+    /// Creates a new FIO job configuration for sequential read testing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sysperf_svr::domain::storage::fio::FioJobConfig;
+    ///
+    /// let config = FioJobConfig::new_sequential_read("4k", "1G", 4, 32);
+    /// assert_eq!(config.bs, "4k");
+    /// assert_eq!(config.numjobs, 4);
+    /// ```
+    pub fn new_sequential_read(bs: &str, size: &str, numjobs: u32, iodepth: u32) -> Self {
+        Self {
+            ioengine: IoEngine::Libaio,
+            rw: IoPattern::Read,
+            bs: bs.to_string(),
+            size: size.to_string(),
+            numjobs,
+            iodepth,
+            direct: true,
+            ..Default::default()
+        }
+    }
+
+    /// Creates a new FIO job configuration for random write testing.
+    pub fn new_random_write(bs: &str, size: &str, numjobs: u32, iodepth: u32) -> Self {
+        Self {
+            ioengine: IoEngine::Libaio,
+            rw: IoPattern::RandWrite,
+            bs: bs.to_string(),
+            size: size.to_string(),
+            numjobs,
+            iodepth,
+            direct: true,
+            ..Default::default()
+        }
+    }
+}
+
+impl StorageTarget {
+    /// Creates a new file-based storage target.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to the file or directory
+    /// * `options` - Optional target-specific configuration
+    pub fn new_file<P: Into<PathBuf>>(path: P, options: Option<HashMap<String, String>>) -> Self {
+        Self {
+            path: path.into(),
+            target_type: "file".to_string(),
+            options: options.unwrap_or_default(),
+        }
+    }
+
+    /// Creates a new device-based storage target.
+    pub fn new_device<P: Into<PathBuf>>(path: P, options: Option<HashMap<String, String>>) -> Self {
+        Self {
+            path: path.into(),
+            target_type: "device".to_string(),
+            options: options.unwrap_or_default(),
+        }
+    }
+}
