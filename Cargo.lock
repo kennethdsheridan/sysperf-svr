@@ -461,6 +461,7 @@ dependencies = [
  "dialoguer",
  "fern",
  "log",
+ "serde",
  "serde_json",
 ]
 
