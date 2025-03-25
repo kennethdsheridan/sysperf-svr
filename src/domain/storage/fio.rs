@@ -45,3 +45,45 @@ pub enum IoEngine {
     #[serde(other)]
     Other,
 }
+
+/// I/O patterns supported by FIO.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum IoPattern {
+    Read,
+    Write,
+    RandRead,
+    RandWrite,
+    RandRW,
+    Trim,
+}
+
+/// Configuration for a single FIO job.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FioJobConfig {
+    /// I/O engine to use for the Tester
+    pub ioengine: IoEngine,
+    /// I/O pattern to Tester
+    pub rw: IoPattern,
+    /// Block size for I/O operations (e.g. "4k", "1M")
+    pub bs: String,
+    /// Total size per file/device to Tester
+    pub size: String,
+    /// Number of concurrent jobs to running
+    pub numjobs: u32,
+    /// I/O queue depth
+    pub iodepth: u32,
+    /// Use O_DIRECT flag for non-buffered I/O
+    #[serde(default)]
+    pub direct: bool,
+    /// Use buffered I/O
+    #[serde(default)]
+    pub buffered: bool,
+    /// Percentage of reads for mixed workloads
+    /// Only applicable when rw = RandRW
+    #[serde(default)]
+    pub rwmixread: Option<u32>,
+    /// Additional job-specific options
+    #[serde(flatten)]
+    pub extra_options: HashMap<String, String>,
+}
