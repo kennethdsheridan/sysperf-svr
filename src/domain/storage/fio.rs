@@ -34,7 +34,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum IoEngine {
     Sync,
