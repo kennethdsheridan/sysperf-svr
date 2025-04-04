@@ -20,11 +20,11 @@
 //! };
 //!
 //! let job = FioJobConfig {
-//!     ioengine: IoEngine::Libaio,
+//!     ioengine: IoEngine::IoUring,
 //!     rw: IoPattern::RandRead,
 //!     bs: "4k".into(),
-//!     size: "1G".into(),
-//!     numjobs: 4,
+//!     size: "16G".into(),
+//!     numjobs: 8,
 //!     iodepth: 32,
 //!     direct: true,
 //!     ..Default::default()
