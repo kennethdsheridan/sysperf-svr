@@ -131,14 +131,16 @@ pub struct FioResult {
 impl Default for FioJobConfig {
     fn default() -> Self {
         Self {
-            ioengine: IoEngine::Sync,
+            ioengine: IoEngine::IoUring,
             rw: IoPattern::Read,
+            // Default to 4k block size and 16GB size
             bs: String::from("4k"),
-            size: String::from("1G"),
-            numjobs: 1,
-            iodepth: 1,
-            direct: false,
-            buffered: true,
+            size: String::from("16G"),
+            // Default to 32 job and 1 I/O depth
+            numjobs: 32,
+            iodepth: 32,
+            direct: true,
+            buffered: false,
             rwmixread: None,
             extra_options: HashMap::new(),
         }
@@ -181,7 +183,7 @@ impl FioJobConfig {
     /// ```
     pub fn new_sequential_read(bs: &str, size: &str, numjobs: u32, iodepth: u32) -> Self {
         Self {
-            ioengine: IoEngine::Libaio,
+            ioengine: IoEngine::IoUring,
             rw: IoPattern::Read,
             bs: bs.to_string(),
             size: size.to_string(),
@@ -195,7 +197,7 @@ impl FioJobConfig {
     /// Creates a new FIO job configuration for random write testing.
     pub fn new_random_write(bs: &str, size: &str, numjobs: u32, iodepth: u32) -> Self {
         Self {
-            ioengine: IoEngine::Libaio,
+            ioengine: IoEngine::IoUring,
             rw: IoPattern::RandWrite,
             bs: bs.to_string(),
             size: size.to_string(),
