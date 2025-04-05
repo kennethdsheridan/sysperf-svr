@@ -31,9 +31,11 @@ pub fn run() -> Result<()> {
             .map_err(|e| anyhow::anyhow!("Failed to initialize logger: {}", e))?,
     );
     
-    logger.log_info("CLI application starting...");
+    // Clone logger for initial logging
+    let logger_clone = logger.clone();
+    logger_clone.log_info("CLI application starting...");
     if cli.debug > 0 {
-        logger.log_debug(&format!("Debug mode enabled (level: {})", cli.debug.to_string()));
+        logger_clone.log_debug(&format!("Debug mode enabled (level: {})", cli.debug.to_string()));
     }
    
     // Initialize adapters
@@ -41,30 +43,30 @@ pub fn run() -> Result<()> {
     let benchmark = BenchmarkAdapter::new(
         String::from("fio"),
         vec![String::from("--version")],
-        logger.clone(),
+        logger.clone(),  // Clone for benchmark adapter
     );
     let metrics = MetricsAdapter::new();
 
     // Create application instance
-    let mut app = Application::new(db, benchmark, metrics, logger.clone());
+    let mut app = Application::new(db, benchmark, metrics, logger);
 
     // Handle subcommands
     match &cli.command {
         Some(Commands::Benchmark { tool }) => {
-            logger.as_ref().log_info(&format!("Running benchmark with tool: {}", tool.as_deref().unwrap_or("default")));
+            app.logger.log_info(&format!("Running benchmark with tool: {}", tool.as_deref().unwrap_or("default")));
             commands::run_benchmark(&mut app, tool)?;
         }
         Some(Commands::Collect { metric }) => {
-            logger.as_ref().log_info(&format!("Collecting metrics: {}", metric.as_deref().unwrap_or("default")));
+            app.logger.log_info(&format!("Collecting metrics: {}", metric.as_deref().unwrap_or("default")));
             commands::collect_metrics(&mut app, metric)?;
         }
         None => {
-            logger.as_ref().log_info("Starting interactive mode");
+            app.logger.log_info("Starting interactive mode");
             commands::run_interactive(&mut app)?;
         }
     }
 
-    logger.as_ref().log_info("CLI application completed successfully");
+    app.logger.log_info("CLI application completed successfully");
     Ok(())
 }
 

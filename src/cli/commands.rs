@@ -16,11 +16,10 @@ const BLOCK_SIZES: &[&str] = &["4k", "8k", "16k", "32k", "64k", "128k", "256k", 
 
 const BENCHMARK_DIR: &str = "/mnt/benchmark";
 
-pub fn run_benchmark<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort, L: LoggerPort>(
-    app: &mut Application<DB, B, M, L>,
+pub fn run_benchmark<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort>(
+    app: &mut Application<DB, B, M>,
     tool: &Option<String>,
 ) -> Result<()> {
-    // init LoggerPort with LoggerPort
     let logger = app.logger.clone();
     logger.log_info("Running benchmark...");
 
@@ -39,8 +38,9 @@ pub fn run_benchmark<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort, L: Logg
     }
 }
 
-fn run_fio_benchmark<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort, L: LoggerPort>(
-    app: &mut Application<DB, B, M, L>,
+
+fn run_fio_benchmark<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort>(
+    app: &mut Application<DB, B, M>,
 ) -> Result<()> {
     // First validate FIO is available
     if let Err(e) = app.benchmark.run_fio() {
@@ -100,17 +100,27 @@ fn run_fio_benchmark<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort, L: Logg
     Ok(())
 }
 
-
 pub fn run_interactive<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort>(
-    app: &mut Application<DB, B, M, L>,
+    app: &mut Application<DB, B, M>,
 ) -> Result<()> {
-    app.run_benchmark()?;
-    println!("Running interactive mode...");
-    Ok(())
+    let options = vec!["FIO Benchmark", "System Metrics", "Exit"];
+    
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Select an operation")
+        .items(&options)
+        .default(0)
+        .interact()?;
+
+    match selection {
+        0 => run_fio_benchmark(app),
+        1 => collect_metrics(app, &None),
+        _ => Ok(()),
+    }
 }
 
+
 pub fn collect_metrics<DB: DatabasePort, B: BenchmarkPort, M: MetricsPort>(
-    app: &mut Application<DB, B, M, L>,
+    app: &mut Application<DB, B, M>,
     metric: &Option<String>,
 ) -> Result<()> {
     println!("Collecting metrics...");
