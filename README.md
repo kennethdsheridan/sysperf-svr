@@ -22,7 +22,7 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
 
 ## Roadmap 
 
-### Phase 1: Network Performance (Q2 2024)
+### Network Performance 
 - [ ] InfiniBand Testing Suite
   - RDMA performance analysis
   - Subnet Manager performance
@@ -35,7 +35,7 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - OpenMPI benchmark suite
   - Custom network test framework
 
-### Phase 2: GPU Cluster Testing (Q3 2024)
+### GPU Cluster Testing 
 - [ ] Containerized GPU Benchmarks
   - HPL-AI implementation
   - NVIDIA NCCL tests
@@ -48,7 +48,7 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - Memory bandwidth testing
   - Scaling efficiency analysis
 
-### Phase 3: Advanced Storage (Q4 2024)
+### Advanced Storage
 - [ ] Parallel Filesystem Testing
   - Lustre performance suite
   - GPFS throughput analysis
@@ -61,26 +61,20 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - Custom I/O patterns
   - Multi-client testing
 
-### Phase 4: System Integration (Q1 2025)
+### System Integration 
 - [ ] Job Scheduler Integration
   - SLURM support
   - LSF compatibility
   - PBS integration
   - Resource allocation analysis
 
-### Phase 5: Advanced Analytics (Q2 2025)
+### Advanced Analytics 
 - [ ] Machine Learning Integration
   - Performance prediction
   - Anomaly detection
   - Resource optimization
   - Trend analysis
 
-### Phase 6: Quantum & Future Tech (Q3 2025)
-- [ ] Quantum Computing Benchmarks
-  - Gate-based system testing
-  - Quantum simulator benchmarks
-  - Hybrid algorithm performance
-  - Error rate analysis
 
 ## Quick Start
 
