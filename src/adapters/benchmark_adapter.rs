@@ -146,6 +146,45 @@ impl BenchmarkPort for BenchmarkAdapter {
         }
     }
 
+    fn validate(&self) -> Result<()> {
+        self.logger.log_debug("Validating benchmark directory");
+
+        // Check if benchmark directory exists
+        if !std::path::Path::new("/mnt/benchmark").exists() {
+            let error_msg = "Benchmark directory does not exist";
+            self.logger.log_error(error_msg);
+            Err(anyhow::anyhow!(error_msg))
+        } else {
+            self.logger
+                .log_info("Benchmark directory validation successful");
+            Ok(())
+        }
+    }
+
+    fn run_command(&self, command: &str, args: &str) -> Result<String> {
+        self.logger
+            .log_debug(&format!("Running command: {} with args: {}", command, args));
+        match Command::new(command).arg(args).output() {
+            Ok(output) => {
+                if output.status.success() {
+                    let output_str = String::from_utf8_lossy(&output.stdout).to_string();
+                    self.logger
+                        .log_info(&format!("Command output: {}", output_str));
+                    Ok(output_str)
+                } else {
+                    let error_msg = self.format_output(&output.stderr, true);
+                    self.logger.log_error(&error_msg);
+                    Err(anyhow::anyhow!(error_msg))
+                }
+            }
+            Err(e) => {
+                let error_msg = format!("Failed to execute command: {}", e);
+                self.logger.log_error(&error_msg);
+                Err(anyhow::anyhow!(error_msg))
+            }
+        }
+    }
+
     /// Executes FIO benchmark with version check
     ///
     /// # Returns
