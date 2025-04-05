@@ -3,54 +3,63 @@ mod commands;
 
 use std::sync::Arc;
 use self::cli_struct::{Cli, Commands};
-use crate::adapters::database_adapter::DatabaseAdapter;
-use crate::adapters::log_adapter::{init, FernLogger};
-use crate::adapters::{benchmark_adapter::BenchmarkAdapter, metrics_adapter::MetricsAdapter};
+use crate::ports::{
+    database_port::DatabasePort,
+    metrics_port::MetricsPort,
+    benchmark_port::BenchmarkPort,
+    log_port::LoggerPort,
+};
+use crate::adapters::{
+    database_adapter::DatabaseAdapter,
+    metrics_adapter::MetricsAdapter,
+    benchmark_adapter::BenchmarkAdapter,
+    log_adapter::init,
+};
 use crate::application::Application;
-use crate::ports::log_port::LoggerPort;
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
 use dialoguer::{theme::ColorfulTheme, Confirm, Select};
-use log::logger;
 use log::LevelFilter;
 
 pub fn run() -> Result<()> {
     let cli = Cli::parse();
 
-    // Set log level based on debug flag
     let log_level = match cli.debug {
         0 => LevelFilter::Info,
         1 => LevelFilter::Debug,
         _ => LevelFilter::Trace,
     };
 
-    // Initialize the logger using LoggerPort
+    // Create logger
     let logger: Arc<dyn LoggerPort> = Arc::new(
         init("logs", log_level)
             .map_err(|e| anyhow::anyhow!("Failed to initialize logger: {}", e))?,
     );
     
-    // Clone logger for initial logging
     let logger_clone = logger.clone();
     logger_clone.log_info("CLI application starting...");
     if cli.debug > 0 {
         logger_clone.log_debug(&format!("Debug mode enabled (level: {})", cli.debug.to_string()));
     }
    
-    // Initialize adapters
-    let db = DatabaseAdapter::new();
-    let benchmark = BenchmarkAdapter::new(
+    // Create adapters as trait objects
+    let db: Arc<dyn DatabasePort> = Arc::new(DatabaseAdapter::new());
+    let benchmark: Arc<dyn BenchmarkPort> = Arc::new(BenchmarkAdapter::new(
         String::from("fio"),
         vec![String::from("--version")],
-        logger.clone(),  // Clone for benchmark adapter
+        logger.clone(),
+    ));
+    let metrics: Arc<dyn MetricsPort> = Arc::new(MetricsAdapter::new());
+
+    // Create application with port interfaces
+    let mut app = Application::new(
+        db,
+        benchmark,
+        metrics,
+        logger
     );
-    let metrics = MetricsAdapter::new();
 
-    // Create application instance
-    let mut app = Application::new(db, benchmark, metrics, logger);
-
-    // Handle subcommands
     match &cli.command {
         Some(Commands::Benchmark { tool }) => {
             app.logger.log_info(&format!("Running benchmark with tool: {}", tool.as_deref().unwrap_or("default")));

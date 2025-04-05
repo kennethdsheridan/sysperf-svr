@@ -19,25 +19,20 @@ use crate::ports::metrics_port::MetricsPort;
 /// # Generic Constraints
 /// All type parameters must implement their respective port traits, enabling
 /// dependency inversion and making the application independent of specific implementations.
-pub struct Application<DB, B, M>
-where
-    DB: DatabasePort,
-    B: BenchmarkPort,
-    M: MetricsPort,
-{
-    pub db: DB,
-    pub benchmark: B,
-    pub metrics: M,
+pub struct Application {
+    pub db: Arc<dyn DatabasePort>,
+    pub benchmark: Arc<dyn BenchmarkPort>,
+    pub metrics: Arc<dyn MetricsPort>,
     pub logger: Arc<dyn LoggerPort>,
 }
 
-impl<DB, B, M> Application<DB, B, M>
-where
-    DB: DatabasePort,
-    B: BenchmarkPort,
-    M: MetricsPort,
-{
-    pub fn new(db: DB, benchmark: B, metrics: M, logger: Arc<dyn LoggerPort>) -> Self {
+impl Application {
+    pub fn new(
+        db: Arc<dyn DatabasePort>,
+        benchmark: Arc<dyn BenchmarkPort>,
+        metrics: Arc<dyn MetricsPort>,
+        logger: Arc<dyn LoggerPort>,
+    ) -> Self {
         Self {
             db,
             benchmark,
@@ -51,4 +46,3 @@ where
         Ok(())
     }
 }
-
