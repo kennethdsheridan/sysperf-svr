@@ -83,20 +83,67 @@ impl BenchmarkAdapter {
     fn get_test_configs() -> Vec<TestConfig> {
         vec![
             // ‑‑‑ Traditional mixes ‑‑‑
-            TestConfig { rw_type: "randread".into(),  rwmixread: None,      name: "pure_read".into()       },
-            TestConfig { rw_type: "randwrite".into(), rwmixread: None,      name: "pure_write".into()      },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(75),  name: "mixed_75r_25w".into()   },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(70),  name: "mixed_70r_30w".into()   },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(65),  name: "mixed_65r_35w".into()   },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(50),  name: "mixed_50r_50w".into()   },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(25),  name: "mixed_25r_75w".into()   },
-
+            TestConfig {
+                rw_type: "randread".into(),
+                rwmixread: None,
+                name: "pure_read".into(),
+            },
+            TestConfig {
+                rw_type: "randwrite".into(),
+                rwmixread: None,
+                name: "pure_write".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(75),
+                name: "mixed_75r_25w".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(70),
+                name: "mixed_70r_30w".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(65),
+                name: "mixed_65r_35w".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(50),
+                name: "mixed_50r_50w".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(25),
+                name: "mixed_25r_75w".into(),
+            },
             // ‑‑‑ AI / ML patterns ‑‑‑
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(95),  name: "ai_train_95r_5w".into() },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(10),  name: "ai_checkpoint_10r_90w".into() },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(48),  name: "ai_pipeline_48r_52w".into() },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(20),  name: "ai_feature_ingest_20r_80w".into() },
-            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(99),  name: "ai_inference_99r_1w".into() },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(95),
+                name: "ai_train_95r_5w".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(10),
+                name: "ai_checkpoint_10r_90w".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(48),
+                name: "ai_pipeline_48r_52w".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(20),
+                name: "ai_feature_ingest_20r_80w".into(),
+            },
+            TestConfig {
+                rw_type: "randrw".into(),
+                rwmixread: Some(99),
+                name: "ai_inference_99r_1w".into(),
+            },
         ]
     }
     /// Run a **single** workload variant and persist its results.
@@ -106,54 +153,74 @@ impl BenchmarkAdapter {
     /// The method builds a dedicated data‑file and JSON result name that embeds both the config
     /// name and a timestamp.  That keeps parallel test runs from stepping on each other and makes
     /// it trivial to correlate `.dat` scratch files with their matching `.json` metrics later on.
-        fn run_benchmark_type(&self, config: &TestConfig) -> Result<()> {
-        let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
-        let test_file = self.benchmark_dir.join(format!("fio_{}_{}.dat", config.name, timestamp));
-        let results_file = self.benchmark_dir.join(format!("results_{}_{}.json", config.name, timestamp));
+    fn run_benchmark_type(&self, config: &TestConfig) -> Result<()> {
+        // 1. File names (unique per run)
+        let ts = chrono::Local::now().format("%Y%m%d_%H%M%S");
+        let test_file = self
+            .benchmark_dir
+            .join(format!("fio_{}_{}.dat", config.name, ts));
+        let results_file = self
+            .benchmark_dir
+            .join(format!("results_{}_{}.json", config.name, ts));
 
-        let mut test_args = vec![
-            format!("--filename={}", test_file.display()),
-            "--direct=1".to_string(),
-            format!("--rw={}", config.rw_type),
-            "--bs=4k".to_string(),
-            "--size=1G".to_string(),
-            "--numjobs=4".to_string(),
-            "--runtime=30".to_string(),
-            "--group_reporting".to_string(),
-            format!("--name=fio_{}_test", config.name),
-            "--output-format=json".to_string(),
+        // 2. Base argument set tuned to saturate NVMe
+        let mut args = vec![
+            format!("--filename={}", test_file.display()), // raw block dev or sparse file
+            "--ioengine=io_uring,lba".into(),              // io_uring if available, else libaio
+            "--direct=1".into(), // bypass page‑cache (safe even with 1 TB RAM)
+            format!("--rw={}", config.rw_type), // workload pattern
+            // Use a **hybrid block‑size strategy**: 4 KiB for random (IOPS) workloads, 1 MiB for
+            // sequential throughput.  FIO lets us override per‑job if needed, but as a rule of
+            // thumb large sequential reads/writes hit peak GB/s with ≥ 1 MiB.
+            if config.rw_type == "randrw" {
+                "--bs=4k".into()
+            } else {
+                "--bs=1M".into()
+            },
+            // Push well beyond page‑cache yet stay inside most NVMe capacities.
+            "--size=256G".into(), // ~¼ TiB – enough to observe steady‑state behaviour
+            // Fan out across sockets/cores: 16 jobs × 128‑deep iodepth ≈ 2 K outstanding I/Os.
+            "--numjobs=16".into(),  // parallel threads per device
+            "--iodepth=128".into(), // deeper queue for PCIe Gen4/5 SSDs
+            "--runtime=180".into(), // three‑minute window for convergence
+            "--time_based".into(),  // use runtime, ignore size limit once sustained
+            "--group_reporting".into(),
+            format!("--name=fio_{}_nvme", config.name),
+            "--output-format=json".into(),
             format!("--output={}", results_file.display()),
         ];
 
-        // Add rwmixread if specified
         if let Some(mix) = config.rwmixread {
-            test_args.push(format!("--rwmixread={}", mix));
+            args.push(format!("--rwmixread={}", mix));
         }
 
+        // 3. Execute
         self.logger.log_info(&format!(
-            "Running {} test{}. Results will be saved to: {}", 
+            "▶︎ {}{} → {}",
             config.name,
-            config.rwmixread.map_or("".to_string(), |mix| format!(" ({}% reads)", mix)),
+            config
+                .rwmixread
+                .map_or(String::new(), |m| format!(" ({}% R)", m)),
             results_file.display()
         ));
 
         let output = Command::new("fio")
-            .args(&test_args)
+            .args(&args)
             .output()
-            .map_err(|e| anyhow::anyhow!("Failed to execute FIO: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to spawn FIO: {}", e))?;
 
         if output.status.success() {
-            self.logger.log_info(&format!("\nBenchmark '{}' completed successfully", config.name));
+            self.logger
+                .log_info(&format!("✔ {} completed", config.name));
             Ok(())
         } else {
-            let error_msg = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("Benchmark failed: {}", error_msg))
+            Err(anyhow::anyhow!(
+                "{} failed: {}",
+                config.name,
+                String::from_utf8_lossy(&output.stderr)
+            ))
         }
     }
-
-
-
-
 
     /// Creates a new BenchmarkAdapter instance
     ///
@@ -269,7 +336,7 @@ impl BenchmarkPort for BenchmarkAdapter {
         self.logger.log_info("All benchmarks completed");
         Ok(())
     }
-    
+
     /// Checks if FIO is installed
     ///
     /// # Returns
@@ -349,7 +416,7 @@ impl BenchmarkPort for BenchmarkAdapter {
             .log_info("Benchmark directory validation successful");
         Ok(())
     }
-    
+
     /// Executes a command with given arguments
     ///
     /// # Arguments
