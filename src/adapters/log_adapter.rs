@@ -105,7 +105,7 @@ pub fn init(
     // Create or truncate log files for each log level.
     let log_levels = ["error", "warn", "info", "debug", "trace"];
     for level in &log_levels {
-        let file_path = format!("{}/one_4_all_{}.log", log_dir_path, level);
+        let file_path = format!("{}/sysperf-svr{}.log", log_dir_path, level);
         File::create(&file_path).map_err(|e| {
             format!(
                 "Failed to create or truncate log file '{}': {}",
