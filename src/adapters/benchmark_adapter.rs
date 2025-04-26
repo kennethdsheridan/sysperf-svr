@@ -37,7 +37,93 @@ pub struct BenchmarkAdapter {
     benchmark_dir: PathBuf,
 }
 
+#[derive(Debug, Clone)]
+struct TestConfig {
+    rw_type: String,
+    rwmixread: Option<u8>,
+    name: String,
+}
+
 impl BenchmarkAdapter {
+        fn get_test_configs() -> Vec<TestConfig> {
+        vec![
+            TestConfig {
+                rw_type: "randread".to_string(),
+                rwmixread: None,
+                name: "pure_read".to_string(),
+            },
+            TestConfig {
+                rw_type: "randwrite".to_string(),
+                rwmixread: None,
+                name: "pure_write".to_string(),
+            },
+            TestConfig {
+                rw_type: "randrw".to_string(),
+                rwmixread: Some(75),
+                name: "mixed_75r_25w".to_string(),
+            },
+            TestConfig {
+                rw_type: "randrw".to_string(),
+                rwmixread: Some(50),
+                name: "mixed_50r_50w".to_string(),
+            },
+            TestConfig {
+                rw_type: "randrw".to_string(),
+                rwmixread: Some(25),
+                name: "mixed_25r_75w".to_string(),
+            },
+        ]
+    }
+
+        fn run_benchmark_type(&self, config: &TestConfig) -> Result<()> {
+        let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
+        let test_file = self.benchmark_dir.join(format!("fio_{}_{}.dat", config.name, timestamp));
+        let results_file = self.benchmark_dir.join(format!("results_{}_{}.json", config.name, timestamp));
+
+        let mut test_args = vec![
+            format!("--filename={}", test_file.display()),
+            "--direct=1".to_string(),
+            format!("--rw={}", config.rw_type),
+            "--bs=4k".to_string(),
+            "--size=1G".to_string(),
+            "--numjobs=4".to_string(),
+            "--runtime=30".to_string(),
+            "--group_reporting".to_string(),
+            format!("--name=fio_{}_test", config.name),
+            "--output-format=json".to_string(),
+            format!("--output={}", results_file.display()),
+        ];
+
+        // Add rwmixread if specified
+        if let Some(mix) = config.rwmixread {
+            test_args.push(format!("--rwmixread={}", mix));
+        }
+
+        self.logger.log_info(&format!(
+            "Running {} test{}. Results will be saved to: {}", 
+            config.name,
+            config.rwmixread.map_or("".to_string(), |mix| format!(" ({}% reads)", mix)),
+            results_file.display()
+        ));
+
+        let output = Command::new("fio")
+            .args(&test_args)
+            .output()
+            .map_err(|e| anyhow::anyhow!("Failed to execute FIO: {}", e))?;
+
+        if output.status.success() {
+            self.logger.log_info(&format!("\nBenchmark '{}' completed successfully", config.name));
+            Ok(())
+        } else {
+            let error_msg = String::from_utf8_lossy(&output.stderr);
+            Err(anyhow::anyhow!("Benchmark failed: {}", error_msg))
+        }
+    }
+
+
+
+
+
     /// Creates a new BenchmarkAdapter instance
     ///
     /// # Arguments
@@ -131,57 +217,15 @@ impl BenchmarkPort for BenchmarkAdapter {
     /// * Command execution fails
     /// * Command returns non-zero exit status
     fn run(&self) -> Result<()> {
-        // First validate the environment
         self.validate()?;
-        
-        // Check if FIO is installed
         self.check_fio_installation()?;
 
-        // Create a test file of sufficient size
-        let test_file = self.benchmark_dir.join("test.fio");
-        self.logger.log_info(&format!("Creating test file at: {}", test_file.display()));
-
-        // Define comprehensive FIO test parameters
-        let test_args = vec![
-            format!("--filename={}", test_file.display()),
-            "--direct=1".to_string(),        // Use direct I/O
-            "--rw=randrw".to_string(),       // Mixed random read/write
-            "--bs=4k".to_string(),           // 4KB block size
-            "--size=1G".to_string(),         // 1GB file size
-            "--numjobs=4".to_string(),       // Use 4 parallel jobs
-            "--runtime=30".to_string(),      // Run for 30 seconds
-            "--group_reporting".to_string(), 
-            "--name=fio_test".to_string(),
-            "--output-format=json".to_string(),
-        ];
-
-        // Log the actual command being executed
-        self.logger.log_info(&format!(
-            "Executing FIO benchmark: fio {}",
-            test_args.join(" ")
-        ));
-
-        // Execute FIO command
-        let output = Command::new("fio")
-            .args(&test_args)
-            .output()
-            .map_err(|e| anyhow::anyhow!("Failed to execute FIO: {}", e))?;
-
-        // Process command output
-        if output.status.success() {
-            let output_str = String::from_utf8_lossy(&output.stdout);
-            self.logger.log_info("\nBenchmark completed successfully");
-            self.logger.log_info(&format!("\nResults:\n{}", output_str));
-
-            self.logger.log_info(&format!("Test file retained at: {}", test_file.display()));
-            
-            
-            Ok(())
-        } else {
-            let error_msg = self.format_output(&output.stderr, true);
-            self.logger.log_error(&error_msg);
-            Err(anyhow::anyhow!(error_msg))
+        for config in Self::get_test_configs() {
+            self.run_benchmark_type(&config)?;
         }
+
+        self.logger.log_info("All benchmarks completed");
+        Ok(())
     }
 
     fn check_fio_installation(&self) -> Result<()> {
@@ -306,3 +350,4 @@ impl BenchmarkPort for BenchmarkAdapter {
         }
     }
 }
+
