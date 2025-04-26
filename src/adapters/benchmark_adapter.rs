@@ -103,7 +103,7 @@ impl BenchmarkAdapter {
 
         Self {
             command: String::from("fio"),
-            args: FIO_DEAULT_ARGS.iter().map(|&s| s.to_string()).collect(),
+            args,
             logger,
             benchmark_dir,
         }
