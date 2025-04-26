@@ -131,34 +131,55 @@ impl BenchmarkPort for BenchmarkAdapter {
     /// * Command execution fails
     /// * Command returns non-zero exit status
     fn run(&self) -> Result<()> {
-        // Log benchmark execution start
-        self.logger.log_debug(&format!(
-            "Starting benchmark run with command: {}",
-            self.command
-        ));
-        self.logger
-            .log_debug(&format!("Arguments: {:?}", self.args));
+        // First validate the environment
+        self.validate()?;
+        
+        // Check if FIO is installed
+        self.check_fio_installation()?;
+
+        // Create a test file of sufficient size
+        let test_file = self.benchmark_dir.join("test.fio");
+        self.logger.log_info(&format!("Creating test file at: {}", test_file.display()));
+
+        // Define comprehensive FIO test parameters
+        let test_args = vec![
+            format!("--filename={}", test_file.display()),
+            "--direct=1".to_string(),        // Use direct I/O
+            "--rw=randrw".to_string(),       // Mixed random read/write
+            "--bs=4k".to_string(),           // 4KB block size
+            "--size=1G".to_string(),         // 1GB file size
+            "--numjobs=4".to_string(),       // Use 4 parallel jobs
+            "--runtime=30".to_string(),      // Run for 30 seconds
+            "--group_reporting".to_string(), 
+            "--name=fio_test".to_string(),
+            "--output-format=json".to_string(),
+        ];
+
+        // Log the actual command being executed
         self.logger.log_info(&format!(
-            "Executing: {} {}",
-            self.command,
-            self.args.join(" ")
+            "Executing FIO benchmark: fio {}",
+            test_args.join(" ")
         ));
 
-        // Execute command and handle result
-        let output = match Command::new(&self.command).args(&self.args).output() {
-            Ok(output) => output,
-            Err(e) => {
-                let error_msg = format!("Failed to execute command: {}", e);
-                self.logger.log_error(&error_msg);
-                return Err(anyhow::anyhow!(error_msg));
-            }
-        };
+        // Execute FIO command
+        let output = Command::new("fio")
+            .args(&test_args)
+            .output()
+            .map_err(|e| anyhow::anyhow!("Failed to execute FIO: {}", e))?;
 
         // Process command output
         if output.status.success() {
+            let output_str = String::from_utf8_lossy(&output.stdout);
             self.logger.log_info("\nBenchmark completed successfully");
-            self.logger
-                .log_debug(&self.format_output(&output.stdout, false));
+            self.logger.log_info(&format!("\nResults:\n{}", output_str));
+            
+            // Clean up test file
+            if test_file.exists() {
+                if let Err(e) = std::fs::remove_file(&test_file) {
+                    self.logger.log_warning(&format!("Failed to clean up test file: {}", e));
+                }
+            }
+            
             Ok(())
         } else {
             let error_msg = self.format_output(&output.stderr, true);
@@ -166,6 +187,8 @@ impl BenchmarkPort for BenchmarkAdapter {
             Err(anyhow::anyhow!(error_msg))
         }
     }
+}
+
     fn validate(&self) -> Result<()> {
         self.logger.log_debug("Validating benchmark directory");
 
