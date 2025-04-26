@@ -172,13 +172,9 @@ impl BenchmarkPort for BenchmarkAdapter {
             let output_str = String::from_utf8_lossy(&output.stdout);
             self.logger.log_info("\nBenchmark completed successfully");
             self.logger.log_info(&format!("\nResults:\n{}", output_str));
+
+            self.logger.log_info(&format!("Test file retained at: {}", test_file.display()));
             
-            // Clean up test file
-            if test_file.exists() {
-                if let Err(e) = std::fs::remove_file(&test_file) {
-                    self.logger.log_warn(&format!("Failed to clean up test file: {}", e));
-                }
-            }
             
             Ok(())
         } else {
