@@ -6,16 +6,20 @@
 use crate::ports::benchmark_port::BenchmarkPort;
 use crate::ports::log_port::LoggerPort;
 use anyhow::Result;
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
 
 /// default FIO benchmark parameters
-const FIO_DEAULT_ARGS: [&str; 5] = [
+const FIO_DEAULT_ARGS: [&str; 8] = [
     "--name=test",
     "--ioengine=libaio",
     "--rw=randread",
     "--bs=4k",
     "--size=1G",
+    "--numjobs=1",
+    "--group_reporting",
+    "--output-format=json",
 ];
 
 /// Adapter for executing system bechmarks and performance tests
