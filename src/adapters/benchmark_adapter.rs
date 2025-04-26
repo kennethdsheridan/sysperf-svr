@@ -91,10 +91,21 @@ impl BenchmarkAdapter {
     pub fn new_fio(logger: Arc<dyn LoggerPort>) -> Self {
         logger.log_debug("Creating new FIO BenchmarkAdapter with default parameters");
 
+        let benchmark_dir = std::env::current_dir()
+            .expect("Failed to get current directory")
+            .join("benchmark");
+
+        // Create base args from the defaults
+        let mut args: Vec<String> = FIO_DEAULT_ARGS.iter().map(|&s| s.to_string()).collect();
+
+        // then add filename argument using benchmark directory
+        args.push(format!("--filename={}/testfile", benchmark_dir.display()));
+
         Self {
             command: String::from("fio"),
             args: FIO_DEAULT_ARGS.iter().map(|&s| s.to_string()).collect(),
             logger,
+            benchmark_dir,
         }
     }
     fn format_output(&self, output: &[u8], is_error: bool) -> String {
