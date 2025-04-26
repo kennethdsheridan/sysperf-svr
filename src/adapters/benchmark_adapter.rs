@@ -133,24 +133,25 @@ impl BenchmarkPort for BenchmarkAdapter {
     fn run(&self) -> Result<()> {
         // First validate the environment
         self.validate()?;
-        
+
         // Check if FIO is installed
         self.check_fio_installation()?;
 
         // Create a test file of sufficient size
         let test_file = self.benchmark_dir.join("test.fio");
-        self.logger.log_info(&format!("Creating test file at: {}", test_file.display()));
+        self.logger
+            .log_info(&format!("Creating test file at: {}", test_file.display()));
 
         // Define comprehensive FIO test parameters
         let test_args = vec![
             format!("--filename={}", test_file.display()),
-            "--direct=1".to_string(),        // Use direct I/O
-            "--rw=randrw".to_string(),       // Mixed random read/write
-            "--bs=4k".to_string(),           // 4KB block size
-            "--size=1G".to_string(),         // 1GB file size
-            "--numjobs=4".to_string(),       // Use 4 parallel jobs
-            "--runtime=30".to_string(),      // Run for 30 seconds
-            "--group_reporting".to_string(), 
+            "--direct=1".to_string(),   // Use direct I/O
+            "--rw=randrw".to_string(),  // Mixed random read/write
+            "--bs=4k".to_string(),      // 4KB block size
+            "--size=1G".to_string(),    // 1GB file size
+            "--numjobs=4".to_string(),  // Use 4 parallel jobs
+            "--runtime=30".to_string(), // Run for 30 seconds
+            "--group_reporting".to_string(),
             "--name=fio_test".to_string(),
             "--output-format=json".to_string(),
         ];
@@ -172,14 +173,15 @@ impl BenchmarkPort for BenchmarkAdapter {
             let output_str = String::from_utf8_lossy(&output.stdout);
             self.logger.log_info("\nBenchmark completed successfully");
             self.logger.log_info(&format!("\nResults:\n{}", output_str));
-            
+
             // Clean up test file
             if test_file.exists() {
                 if let Err(e) = std::fs::remove_file(&test_file) {
-                    self.logger.log_warning(&format!("Failed to clean up test file: {}", e));
+                    self.logger
+                        .log_warning(&format!("Failed to clean up test file: {}", e));
                 }
             }
-            
+
             Ok(())
         } else {
             let error_msg = self.format_output(&output.stderr, true);
@@ -189,102 +191,101 @@ impl BenchmarkPort for BenchmarkAdapter {
     }
 }
 
-    fn validate(&self) -> Result<()> {
-        self.logger.log_debug("Validating benchmark directory");
+fn validate(&self) -> Result<()> {
+    self.logger.log_debug("Validating benchmark directory");
 
-        // Get project root directory (where Cargo.toml is located)
-        let project_root = std::env::current_dir().map_err(|e| {
-            let error_msg = format!("Could not determine current directory: {}", e);
+    // Get project root directory (where Cargo.toml is located)
+    let project_root = std::env::current_dir().map_err(|e| {
+        let error_msg = format!("Could not determine current directory: {}", e);
+        self.logger.log_error(&error_msg);
+        anyhow::anyhow!(error_msg)
+    })?;
+
+    // Create benchmark directory path within project root
+    let benchmark_dir = project_root.join("benchmark");
+
+    // Create directory if it doesn't exist
+    if !benchmark_dir.exists() {
+        self.logger
+            .log_info("Benchmark directory does not exist, creating it");
+        std::fs::create_dir_all(&benchmark_dir).map_err(|e| {
+            let error_msg = format!(
+                "Failed to create benchmark directory {}: {}",
+                benchmark_dir.display(),
+                e
+            );
             self.logger.log_error(&error_msg);
             anyhow::anyhow!(error_msg)
         })?;
 
-        // Create benchmark directory path within project root
-        let benchmark_dir = project_root.join("benchmark");
-
-        // Create directory if it doesn't exist
-        if !benchmark_dir.exists() {
-            self.logger
-                .log_info("Benchmark directory does not exist, creating it");
-            std::fs::create_dir_all(&benchmark_dir).map_err(|e| {
-                let error_msg = format!(
-                    "Failed to create benchmark directory {}: {}",
-                    benchmark_dir.display(),
-                    e
-                );
-                self.logger.log_error(&error_msg);
-                anyhow::anyhow!(error_msg)
-            })?;
-
-            self.logger.log_info(&format!(
-                "Successfully created benchmark directory: {}",
-                benchmark_dir.display()
-            ));
-        }
-
-        self.logger
-            .log_info("Benchmark directory validation successful");
-        Ok(())
+        self.logger.log_info(&format!(
+            "Successfully created benchmark directory: {}",
+            benchmark_dir.display()
+        ));
     }
 
-    fn run_command(&self, command: &str, args: &str) -> Result<String> {
-        self.logger
-            .log_debug(&format!("Running command: {} with args: {}", command, args));
-        match Command::new(command).arg(args).output() {
-            Ok(output) => {
-                if output.status.success() {
-                    let output_str = String::from_utf8_lossy(&output.stdout).to_string();
-                    self.logger
-                        .log_info(&format!("Command output: {}", output_str));
-                    Ok(output_str)
-                } else {
-                    let error_msg = self.format_output(&output.stderr, true);
-                    self.logger.log_error(&error_msg);
-                    Err(anyhow::anyhow!(error_msg))
-                }
-            }
-            Err(e) => {
-                let error_msg = format!("Failed to execute command: {}", e);
+    self.logger
+        .log_info("Benchmark directory validation successful");
+    Ok(())
+}
+
+fn run_command(&self, command: &str, args: &str) -> Result<String> {
+    self.logger
+        .log_debug(&format!("Running command: {} with args: {}", command, args));
+    match Command::new(command).arg(args).output() {
+        Ok(output) => {
+            if output.status.success() {
+                let output_str = String::from_utf8_lossy(&output.stdout).to_string();
+                self.logger
+                    .log_info(&format!("Command output: {}", output_str));
+                Ok(output_str)
+            } else {
+                let error_msg = self.format_output(&output.stderr, true);
                 self.logger.log_error(&error_msg);
                 Err(anyhow::anyhow!(error_msg))
             }
         }
-    }
-
-    /// Executes FIO benchmark with version check
-    ///
-    /// # Returns
-    ///
-    /// * `Result<String>` - FIO version string or error
-    ///
-    /// # Errors
-    ///
-    /// Returns error if:
-    /// * FIO command is not available
-    /// * Version check fails
-    fn run_fio(&self) -> Result<String> {
-        self.logger.log_debug("Running FIO version check");
-
-        // Execute FIO version check
-        let output = match Command::new("fio").arg("--version").output() {
-            Ok(output) => output,
-            Err(e) => {
-                let error_msg = format!("Failed to execute FIO command: {}", e);
-                self.logger.log_error(&error_msg);
-                return Err(anyhow::anyhow!(error_msg));
-            }
-        };
-
-        // Process version check output
-        if output.status.success() {
-            let version = String::from_utf8_lossy(&output.stdout).to_string();
-            self.logger
-                .log_info(&format!("FIO version check successful: {}", version));
-            Ok(version)
-        } else {
-            let error_msg = self.format_output(&output.stderr, true);
+        Err(e) => {
+            let error_msg = format!("Failed to execute command: {}", e);
             self.logger.log_error(&error_msg);
-            Err(anyhow::anyhow!("Failed to run fio command: {}", error_msg))
+            Err(anyhow::anyhow!(error_msg))
         }
+    }
+}
+
+/// Executes FIO benchmark with version check
+///
+/// # Returns
+///
+/// * `Result<String>` - FIO version string or error
+///
+/// # Errors
+///
+/// Returns error if:
+/// * FIO command is not available
+/// * Version check fails
+fn run_fio(&self) -> Result<String> {
+    self.logger.log_debug("Running FIO version check");
+
+    // Execute FIO version check
+    let output = match Command::new("fio").arg("--version").output() {
+        Ok(output) => output,
+        Err(e) => {
+            let error_msg = format!("Failed to execute FIO command: {}", e);
+            self.logger.log_error(&error_msg);
+            return Err(anyhow::anyhow!(error_msg));
+        }
+    };
+
+    // Process version check output
+    if output.status.success() {
+        let version = String::from_utf8_lossy(&output.stdout).to_string();
+        self.logger
+            .log_info(&format!("FIO version check successful: {}", version));
+        Ok(version)
+    } else {
+        let error_msg = self.format_output(&output.stderr, true);
+        self.logger.log_error(&error_msg);
+        Err(anyhow::anyhow!("Failed to run fio command: {}", error_msg))
     }
 }
