@@ -83,41 +83,41 @@ impl BenchmarkAdapter {
     fn get_test_configs() -> Vec<TestConfig> {
         vec![
             // ‑‑‑ Traditional mixes ‑‑‑
-            TestConfig {
-                rw_type: "randread".into(),
-                rwmixread: None,
-                name: "pure_read".into(),
-            },
-            TestConfig {
-                rw_type: "randwrite".into(),
-                rwmixread: None,
-                name: "pure_write".into(),
-            },
-            TestConfig {
-                rw_type: "randrw".into(),
-                rwmixread: Some(75),
-                name: "mixed_75r_25w".into(),
-            },
-            TestConfig {
-                rw_type: "randrw".into(),
-                rwmixread: Some(70),
-                name: "mixed_70r_30w".into(),
-            },
-            TestConfig {
-                rw_type: "randrw".into(),
-                rwmixread: Some(65),
-                name: "mixed_65r_35w".into(),
-            },
-            TestConfig {
-                rw_type: "randrw".into(),
-                rwmixread: Some(50),
-                name: "mixed_50r_50w".into(),
-            },
-            TestConfig {
-                rw_type: "randrw".into(),
-                rwmixread: Some(25),
-                name: "mixed_25r_75w".into(),
-            },
+            //   TestConfig {
+            //       rw_type: "randread".into(),
+            //       rwmixread: None,
+            //       name: "pure_read".into(),
+            //   },
+            //   TestConfig {
+            //       rw_type: "randwrite".into(),
+            //       rwmixread: None,
+            //       name: "pure_write".into(),
+            //   },
+            //   TestConfig {
+            //       rw_type: "randrw".into(),
+            //       rwmixread: Some(75),
+            //       name: "mixed_75r_25w".into(),
+            //   },
+            //   TestConfig {
+            //       rw_type: "randrw".into(),
+            //       rwmixread: Some(70),
+            //       name: "mixed_70r_30w".into(),
+            //   },
+            //   TestConfig {
+            //       rw_type: "randrw".into(),
+            //       rwmixread: Some(65),
+            //       name: "mixed_65r_35w".into(),
+            //   },
+            //   TestConfig {
+            //       rw_type: "randrw".into(),
+            //       rwmixread: Some(50),
+            //       name: "mixed_50r_50w".into(),
+            //   },
+            //   TestConfig {
+            //       rw_type: "randrw".into(),
+            //       rwmixread: Some(25),
+            //       name: "mixed_25r_75w".into(),
+            //   },
             // ‑‑‑ AI / ML patterns ‑‑‑
             TestConfig {
                 rw_type: "randrw".into(),
@@ -182,7 +182,7 @@ impl BenchmarkAdapter {
             // Fan out across sockets/cores: 16 jobs × 128‑deep iodepth ≈ 2 K outstanding I/Os.
             "--numjobs=16".into(),  // parallel threads per device
             "--iodepth=128".into(), // deeper queue for PCIe Gen4/5 SSDs
-            "--runtime=180".into(), // three‑minute window for convergence
+            "--runtime=600".into(), // three‑minute window for convergence
             "--time_based".into(),  // use runtime, ignore size limit once sustained
             "--group_reporting".into(),
             format!("--name=fio_{}_nvme", config.name),
