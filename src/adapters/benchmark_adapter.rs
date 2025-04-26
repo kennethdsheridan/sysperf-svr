@@ -167,7 +167,7 @@ impl BenchmarkAdapter {
         // tuned to saturate NVMe
         let mut args = vec![
             format!("--filename={}", test_file.display()), // raw block dev or sparse file
-            "--ioengine=io_uring,lba".into(),              // io_uring if available, else libaio
+            "--ioengine=uring".into(),                     // io_uring if available, else libaio
             "--direct=1".into(), // bypass page‑cache (safe even with 1 TB RAM)
             format!("--rw={}", config.rw_type), // workload pattern
             // Use a **hybrid block‑size strategy**: 4 KiB for random (IOPS) workloads, 1 MiB for
