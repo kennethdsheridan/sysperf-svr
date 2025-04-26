@@ -1,8 +1,38 @@
 //! Benchmark Adapter Module
 //!
-//! This module provides an adapter for running benchmarks. It implements the BenchmarkPort trait,
-//! allowing for the execution of benchmarking commands and returning their output.
-
+//! This module provides an adapter for running FIO‑based storage benchmarks and wraps all test
+//! orchestration behind the `BenchmarkPort` trait.  In addition to the classic OLTP‑style mixes
+//! (75 / 25, 50 / 50, etc.) it now documents—**and automatically exercises**—the I/O patterns that
+//! dominate modern AI/ML pipelines.
+//!
+//! # Reference read / write mixes
+//!
+//! | Workload class & typical block‑size | Canonical R/W mix | FIO settings (`--rw`, `--rwmixread`) |
+//! |------------------------------------|-------------------|----------------------------------------|
+//! | OLTP / relational DB (8 KiB random) | **75 % R / 25 % W** | `randrw`, `75` |
+//! | General virtualised servers (8 KiB random) | **70 / 30** | `randrw`, `70` |
+//! | VDI / e‑mail boot & login storm (4 KiB random) | **65 / 35** | `randrw`, `65` |
+//! | Mixed enterprise apps “worst case” | **50 / 50** | `randrw`, `50` |
+//! | Data‑warehouse scans (64 KiB seq) | **95 / 5** | `rw`, `95` |
+//! | Backup / log capture (256 KiB seq) | **0–5 / 95–100** | `rw`, `5` |
+//! | **AI – deep‑learning training** (128 KiB–1 MiB seq) | **95 / 5** | `randrw`, `95` |
+//! | **AI – checkpoint burst** (1–4 MiB seq) | **10 / 90** | `randrw`, `10` |
+//! | **AI – pipeline aggregate** (prep + training) | **48 / 52** | `randrw`, `48` |
+//! | **AI – feature‑store ingest** (64 KiB seq) | **20 / 80** | `randrw`, `20` |
+//! | **AI – real‑time inference** (4–64 KiB random) | **99 / 1** | `randrw`, `99` |
+//!
+//! The helper `get_test_configs()` returns a ready‑to‑run vector of these mixes so that every
+//! invocation of [`BenchmarkAdapter::run`] iterates through **all** patterns in a single pass.  The
+//! generated result files are timestamped and self‑describing (`results_ai_train_95r_5w_20250425…`),
+//! making post‑processing trivial.
+//!
+//! ---
+//!
+//! ## Adding new mixes
+//! 1. Append a new row to the table above (keep it alphabetically grouped).
+//! 2. Insert a new `TestConfig` entry in `get_test_configs()` with matching `name`, `rw_type`, and
+//!    `rwmixread`.
+//! 3. That’s it—`BenchmarkAdapter::run` will automatically pick it up.
 use crate::ports::benchmark_port::BenchmarkPort;
 use crate::ports::log_port::LoggerPort;
 use anyhow::Result;
