@@ -33,6 +33,7 @@
 //! 2. Insert a new `TestConfig` entry in `get_test_configs()` with matching `name`, `rw_type`, and
 //!    `rwmixread`.
 //! 3. That’s it—`BenchmarkAdapter::run` will automatically pick it up.
+
 use crate::ports::benchmark_port::BenchmarkPort;
 use crate::ports::log_port::LoggerPort;
 use anyhow::Result;
@@ -75,36 +76,28 @@ struct TestConfig {
 }
 
 impl BenchmarkAdapter {
-        fn get_test_configs() -> Vec<TestConfig> {
+    /// Return a vector of canonical I/O patterns to benchmark.
+    ///
+    /// Each `TestConfig` corresponds to one row of the table in the module‑level docs above.
+    fn get_test_configs() -> Vec<TestConfig> {
         vec![
-            TestConfig {
-                rw_type: "randread".to_string(),
-                rwmixread: None,
-                name: "pure_read".to_string(),
-            },
-            TestConfig {
-                rw_type: "randwrite".to_string(),
-                rwmixread: None,
-                name: "pure_write".to_string(),
-            },
-            TestConfig {
-                rw_type: "randrw".to_string(),
-                rwmixread: Some(75),
-                name: "mixed_75r_25w".to_string(),
-            },
-            TestConfig {
-                rw_type: "randrw".to_string(),
-                rwmixread: Some(50),
-                name: "mixed_50r_50w".to_string(),
-            },
-            TestConfig {
-                rw_type: "randrw".to_string(),
-                rwmixread: Some(25),
-                name: "mixed_25r_75w".to_string(),
-            },
+            // ‑‑‑ Traditional mixes ‑‑‑
+            TestConfig { rw_type: "randread".into(),  rwmixread: None,      name: "pure_read".into()       },
+            TestConfig { rw_type: "randwrite".into(), rwmixread: None,      name: "pure_write".into()      },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(75),  name: "mixed_75r_25w".into()   },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(70),  name: "mixed_70r_30w".into()   },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(65),  name: "mixed_65r_35w".into()   },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(50),  name: "mixed_50r_50w".into()   },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(25),  name: "mixed_25r_75w".into()   },
+
+            // ‑‑‑ AI / ML patterns ‑‑‑
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(95),  name: "ai_train_95r_5w".into() },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(10),  name: "ai_checkpoint_10r_90w".into() },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(48),  name: "ai_pipeline_48r_52w".into() },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(20),  name: "ai_feature_ingest_20r_80w".into() },
+            TestConfig { rw_type: "randrw".into(),    rwmixread: Some(99),  name: "ai_inference_99r_1w".into() },
         ]
     }
-
         fn run_benchmark_type(&self, config: &TestConfig) -> Result<()> {
         let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
         let test_file = self.benchmark_dir.join(format!("fio_{}_{}.dat", config.name, timestamp));
