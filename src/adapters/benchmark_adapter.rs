@@ -145,20 +145,42 @@ impl BenchmarkPort for BenchmarkAdapter {
             Err(anyhow::anyhow!(error_msg))
         }
     }
-
     fn validate(&self) -> Result<()> {
         self.logger.log_debug("Validating benchmark directory");
 
-        // Check if benchmark directory exists
-        if !std::path::Path::new("/mnt/benchmark").exists() {
-            let error_msg = "Benchmark directory does not exist";
-            self.logger.log_error(error_msg);
-            Err(anyhow::anyhow!(error_msg))
-        } else {
+        // Get project root directory (where Cargo.toml is located)
+        let project_root = std::env::current_dir().map_err(|e| {
+            let error_msg = format!("Could not determine current directory: {}", e);
+            self.logger.log_error(&error_msg);
+            anyhow::anyhow!(error_msg)
+        })?;
+
+        // Create benchmark directory path within project root
+        let benchmark_dir = project_root.join("benchmark");
+
+        // Create directory if it doesn't exist
+        if !benchmark_dir.exists() {
             self.logger
-                .log_info("Benchmark directory validation successful");
-            Ok(())
+                .log_info("Benchmark directory does not exist, creating it");
+            std::fs::create_dir_all(&benchmark_dir).map_err(|e| {
+                let error_msg = format!(
+                    "Failed to create benchmark directory {}: {}",
+                    benchmark_dir.display(),
+                    e
+                );
+                self.logger.log_error(&error_msg);
+                anyhow::anyhow!(error_msg)
+            })?;
+
+            self.logger.log_info(&format!(
+                "Successfully created benchmark directory: {}",
+                benchmark_dir.display()
+            ));
         }
+
+        self.logger
+            .log_info("Benchmark directory validation successful");
+        Ok(())
     }
 
     fn run_command(&self, command: &str, args: &str) -> Result<String> {

@@ -18,8 +18,6 @@ use crate::adapters::{
 use crate::application::Application;
 use anyhow::Result;
 use clap::Parser;
-use colored::*;
-use dialoguer::{theme::ColorfulTheme, Confirm, Select};
 use log::LevelFilter;
 
 pub fn run() -> Result<()> {

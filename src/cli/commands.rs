@@ -1,10 +1,10 @@
 use crate::application::Application;
 use crate::ports::benchmark_port::{
-    BenchmarkConfig, BenchmarkMetrics, BenchmarkParams, BenchmarkTool, FIOParams, IOType,
+    BenchmarkConfig, BenchmarkParams, BenchmarkTool, FIOParams, IOType,
 };
 use anyhow::Result;
 use colored::*;
-use dialoguer::{theme::ColorfulTheme, Confirm, Select};
+use dialoguer::{theme::ColorfulTheme, Select};
 
 const BLOCK_SIZES: &[&str] = &[
     "4k", "8k", "16k", "32k", "64k", "128k", "256k", "512k", "1m",
