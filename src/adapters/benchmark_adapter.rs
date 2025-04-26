@@ -34,6 +34,7 @@ pub struct BenchmarkAdapter {
     command: String,
     args: Vec<String>,
     logger: Arc<dyn LoggerPort>,
+    benchmark_dir: PathBuf,
 }
 
 impl BenchmarkAdapter {
