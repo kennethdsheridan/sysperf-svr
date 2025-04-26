@@ -28,7 +28,7 @@
 //!
 //! ---
 //!
-//! ## Adding new mixes
+//! ## Adding IO new mixes
 //! 1. Append a new row to the table above (keep it alphabetically grouped).
 //! 2. Insert a new `TestConfig` entry in `get_test_configs()` with matching `name`, `rw_type`, and
 //!    `rwmixread`.
@@ -68,6 +68,7 @@ pub struct BenchmarkAdapter {
     benchmark_dir: PathBuf,
 }
 
+/// Configuration for a single FIO test variant
 #[derive(Debug, Clone)]
 struct TestConfig {
     rw_type: String,
@@ -98,6 +99,13 @@ impl BenchmarkAdapter {
             TestConfig { rw_type: "randrw".into(),    rwmixread: Some(99),  name: "ai_inference_99r_1w".into() },
         ]
     }
+    /// Run a **single** workload variant and persist its results.
+    ///
+    /// * `config` – The [`TestConfig`] describing which `--rw` and `--rwmixread` to apply.
+    ///
+    /// The method builds a dedicated data‑file and JSON result name that embeds both the config
+    /// name and a timestamp.  That keeps parallel test runs from stepping on each other and makes
+    /// it trivial to correlate `.dat` scratch files with their matching `.json` metrics later on.
         fn run_benchmark_type(&self, config: &TestConfig) -> Result<()> {
         let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
         let test_file = self.benchmark_dir.join(format!("fio_{}_{}.dat", config.name, timestamp));
@@ -217,6 +225,17 @@ impl BenchmarkAdapter {
             benchmark_dir,
         }
     }
+
+    /// Formats command output for logging
+    ///
+    /// # Arguments
+    ///
+    /// * `output` - Command output as a byte array
+    /// * `is_error` - Flag indicating if the output is an error
+    ///
+    /// # Returns
+    ///
+    /// * `String` - Formatted output String        
     fn format_output(&self, output: &[u8], is_error: bool) -> String {
         let output_str = String::from_utf8_lossy(output);
         if is_error {
@@ -250,7 +269,17 @@ impl BenchmarkPort for BenchmarkAdapter {
         self.logger.log_info("All benchmarks completed");
         Ok(())
     }
-
+    
+    /// Checks if FIO is installed
+    ///
+    /// # Returns
+    ///
+    /// * `Result<()>` - Success or error with details
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// * FIO is not installed
     fn check_fio_installation(&self) -> Result<()> {
         self.logger.log_debug("Checking FIO installation");
 
@@ -273,7 +302,16 @@ impl BenchmarkPort for BenchmarkAdapter {
         }
     }
 
-
+    /// Validates the benchmark directory
+    ///
+    /// # Returns
+    ///
+    /// * `Result<()>` - Success or error with details
+    ///
+    /// # Errors
+    ///
+    /// Returns error if:
+    /// * Directory creation fails
     fn validate(&self) -> Result<()> {
         self.logger.log_debug("Validating benchmark directory");
 
@@ -311,7 +349,17 @@ impl BenchmarkPort for BenchmarkAdapter {
             .log_info("Benchmark directory validation successful");
         Ok(())
     }
-
+    
+    /// Executes a command with given arguments
+    ///
+    /// # Arguments
+    ///
+    /// * `command` - The command to Execute
+    /// * `args` - The arguments for the command
+    ///
+    /// # Returns
+    ///
+    /// * `Result<String>` - Command output or error_msg    
     fn run_command(&self, command: &str, args: &str) -> Result<String> {
         self.logger
             .log_debug(&format!("Running command: {} with args: {}", command, args));
