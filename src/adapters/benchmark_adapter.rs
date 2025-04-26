@@ -146,6 +146,7 @@ impl BenchmarkAdapter {
             },
         ]
     }
+
     /// Run a **single** workload variant and persist its results.
     ///
     /// * `config` – The [`TestConfig`] describing which `--rw` and `--rwmixread` to apply.
@@ -154,7 +155,7 @@ impl BenchmarkAdapter {
     /// name and a timestamp.  That keeps parallel test runs from stepping on each other and makes
     /// it trivial to correlate `.dat` scratch files with their matching `.json` metrics later on.
     fn run_benchmark_type(&self, config: &TestConfig) -> Result<()> {
-        // 1. File names (unique per run)
+        // file names (unique per run)
         let ts = chrono::Local::now().format("%Y%m%d_%H%M%S");
         let test_file = self
             .benchmark_dir
@@ -163,7 +164,7 @@ impl BenchmarkAdapter {
             .benchmark_dir
             .join(format!("results_{}_{}.json", config.name, ts));
 
-        // 2. Base argument set tuned to saturate NVMe
+        // tuned to saturate NVMe
         let mut args = vec![
             format!("--filename={}", test_file.display()), // raw block dev or sparse file
             "--ioengine=io_uring,lba".into(),              // io_uring if available, else libaio
