@@ -62,10 +62,15 @@ impl BenchmarkAdapter {
             command, args
         ));
 
+        let benchmark_dir = std::env::current_dir()
+            .expect("Failed to get current directory")
+            .join("benchmark");
+
         Self {
             command,
             args,
             logger,
+            benchmark_dir,
         }
     }
 
