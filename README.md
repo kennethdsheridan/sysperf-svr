@@ -83,32 +83,48 @@ database:
 
 ## Architecture
 
-The project follows a Ports and Adapters (Hexagonal) architecture pattern:
+SysPerf follows a **Hexagonal (Ports & Adapters)** design. At a glance, the project is organised like this:
+```bash
 
-```
 sysperf-svr/
 ├── src/
-│   ├── ports/                  # Interface definitions
-│   │   ├── application_port.rs # Core application interfaces
-│   │   ├── database_port.rs    # Database abstraction
-│   │   ├── discovery_port.rs   # Service discovery interfaces
-│   │   ├── log_port.rs        # Logging interfaces
-│   │   ├── node_metrics_port.rs # System metrics interfaces
-│   │   └── maas_login_port.rs  # Authentication interfaces
+│   ├── adapters/                 # ⬅️ OUTBOUND ADAPTERS (secondary)
+│   │   ├── benchmark_adapter.rs
+│   │   ├── database_adapter.rs
+│   │   ├── log_adapter.rs
+│   │   ├── metrics_adapter.rs
+│   │   └── mod.rs
 │   │
-│   ├── adapters/              # Concrete implementations
-│   │   ├── application_adapter.rs # Core application logic
-│   │   ├── log_adapter.rs     # Logging implementation
-│   │   ├── maas_discovery_adapter.rs # Service discovery
-│   │   ├── maas_login_adapter.rs # Authentication
-│   │   ├── node_metrics_adapter.rs # System metrics
-│   │   └── surrealdb_adapter.rs # Database implementation
+│   ├── application/              # ⬅️ APPLICATION SERVICES (use-cases)
+│   │   ├── metrics/              #  ├─ orchestrates metric-collection use-cases
+│   │   ├── storage/              #  ├─ orchestrates storage-benchmark flows
+│   │   └── mod.rs
 │   │
-│   ├── cli/                   # Command line interface
-│   └── main.rs                # Application entry point
+│   ├── cli/                      # ⬅️ PRIMARY ADAPTER – command-line interface
+│   │   └── …                     #     (struct-opt/clap handlers live here)
+│   │
+│   ├── database/                 # ⬅️ DB bootstrap & migration helpers
+│   │   └── …                     
+│   │
+│   ├── domain/                   # ⬅️ ENTERPRISE DOMAIN (pure business rules)
+│   │   └── …                     
+│   │
+│   ├── ports/                    # ⬅️ PORTS (traits) – the “hexagon edges”
+│   │   ├── benchmark_port.rs
+│   │   ├── database_port.rs
+│   │   ├── log_port.rs
+│   │   ├── metrics_port.rs
+│   │   ├── storage_port.rs
+│   │   └── mod.rs
+│   │
+│   ├── wasm/                     # ⬅️ PRIMARY ADAPTER – WebAssembly front-end
+│   │   └── …                     
+│   │
+│   ├── lib.rs                    # Library entry (re-exports of core crates)
+│   └── main.rs                   # Binary entry (bridges CLI ↔ application layer)
 │
-├── config/                    # Configuration files
-└── tests/                    # Integration tests
+├── config/                       # YAML & TOML examples, baseline configs
+└── tests/                        # Black-box & integration tests
 ```
 
 ### Architectural Approach
