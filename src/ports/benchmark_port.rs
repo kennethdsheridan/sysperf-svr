@@ -82,4 +82,5 @@ pub trait BenchmarkPort {
     fn run_fio(&self) -> Result<String>;
     fn validate(&self) -> Result<()>;
     fn run_command(&self, command: &str, args: &str) -> Result<String>;
+    fn check_fio_installation(&self) -> Result<()>;
 }
