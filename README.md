@@ -1,9 +1,9 @@
 # SysPerf: A Supercomputing Benchmark Framework
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-SysPerf is an evolving supercomputing benchmark framework designed to provide comprehensive performance analysis for HPC environments. Currently supporting storage performance testing via FIO, with an ambitious roadmap for complete cluster performance evaluation capabilities.
+SysPerf is a passion project for benchmarking designed to provide comprehensive performance analysis for HPC environments. The current implementation focuses on storage performance testing via FIO, with a clear path toward complete cluster performance evaluation capabilities.
 
-## On-deck Features
+## Current Features
 
 ### Storage System Analysis
 - **FIO Integration**
@@ -19,62 +19,6 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - Embedded database storage
   - Basic visualization capabilities
   - JSON/CSV export options
-
-## Roadmap 
-
-### Network Performance 
-- [ ] InfiniBand Testing Suite
-  - RDMA performance analysis
-  - Subnet Manager performance
-  - QoS validation
-  - Network congestion testing
-  
-- [ ] Network Tools Integration
-  - iperf3 TCP/UDP testing
-  - perftest RDMA metrics
-  - OpenMPI benchmark suite
-  - Custom network test framework
-
-### GPU Cluster Testing 
-- [ ] Containerized GPU Benchmarks
-  - HPL-AI implementation
-  - NVIDIA NCCL tests
-  - GPU-Direct RDMA
-  - Multi-node GPU communication
-  
-- [ ] ML/AI Performance Suite
-  - Distributed training metrics
-  - Model inference benchmarks
-  - Memory bandwidth testing
-  - Scaling efficiency analysis
-
-### Advanced Storage
-- [ ] Parallel Filesystem Testing
-  - Lustre performance suite
-  - GPFS throughput analysis
-  - BeeGFS benchmarking
-  - Metadata performance testing
-  
-- [ ] Extended I/O Testing
-  - IOR integration
-  - mdtest implementation
-  - Custom I/O patterns
-  - Multi-client testing
-
-### System Integration 
-- [ ] Job Scheduler Integration
-  - SLURM support
-  - LSF compatibility
-  - PBS integration
-  - Resource allocation analysis
-
-### Advanced Analytics 
-- [ ] Machine Learning Integration
-  - Performance prediction
-  - Anomaly detection
-  - Resource optimization
-  - Trend analysis
-
 
 ## Quick Start
 
@@ -101,13 +45,7 @@ cargo test
 
 ```bash
 # Run basic FIO test
-./target/release/sysperf-svr benchmark --tool fio --test-type random-read
-
-# Run comprehensive storage benchmark
-./target/release/sysperf-svr storage-suite
-
-# View results
-./target/release/sysperf-svr results --latest
+./target/release/sysperf-svr benchmark --tool fio &
 ```
 
 ## Configuration
@@ -211,12 +149,60 @@ The project uses a Ports and Adapters (Hexagonal) architecture that provides:
   - GPU benchmarking interfaces
   - Additional storage adapters
 
-### Development Focus Areas
-1. Network testing implementation
-2. GPU benchmark integration
-3. Visualization improvements
-4. Documentation
-5. Test coverage
+## Roadmap
+
+### Network Performance 
+- [ ] InfiniBand Testing Suite
+  - RDMA performance analysis
+  - Subnet Manager performance
+  - QoS validation
+  - Network congestion testing
+  
+- [ ] Network Tools Integration
+  - iperf3 TCP/UDP testing
+  - perftest RDMA metrics
+  - OpenMPI benchmark suite
+  - Custom network test framework
+
+### GPU Cluster Testing 
+- [ ] Containerized GPU Benchmarks
+  - HPL-AI implementation
+  - NVIDIA NCCL tests
+  - GPU-Direct RDMA
+  - Multi-node GPU communication
+  
+- [ ] ML/AI Performance Suite
+  - Distributed training metrics
+  - Model inference benchmarks
+  - Memory bandwidth testing
+  - Scaling efficiency analysis
+
+### Advanced Storage
+- [ ] Parallel Filesystem Testing
+  - Lustre performance suite
+  - GPFS throughput analysis
+  - BeeGFS benchmarking
+  - Metadata performance testing
+  
+- [ ] Extended I/O Testing
+  - IOR integration
+  - mdtest implementation
+  - Custom I/O patterns
+  - Multi-client testing
+
+### System Integration 
+- [ ] Job Scheduler Integration
+  - SLURM support
+  - LSF compatibility
+  - PBS integration
+  - Resource allocation analysis
+
+### Advanced Analytics 
+- [ ] Machine Learning Integration
+  - Performance prediction
+  - Anomaly detection
+  - Resource optimization
+  - Trend analysis
 
 ## License
 
@@ -232,17 +218,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ```bibtex
 @software{sysperf2024,
   author = {Kenny (Knight) Sheridan},
-  title = {SysPerf: Supercomputing Benchmark Framework},
+  title = {SysPerf: A Supercomputing Benchmark Framework},
   year = {2024},
   publisher = {GitHub},
-  url = {https://github.com/kenetthdsheridan/sysperf-svr}
+  url = {https://github.com/kennethdsheridan/sysperf-svr}
 }
 ```
-
-## Project Status
-
-- **Stable**: FIO-based storage testing
-- **Alpha**: Basic metric collection and visualization
-- **Planning**: All other features
-
-
