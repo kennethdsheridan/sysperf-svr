@@ -1,4 +1,4 @@
-# SysPerf: Supercomputing Benchmark Framework
+# SysPerf: A Supercomputing Benchmark Framework
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 SysPerf is an evolving supercomputing benchmark framework designed to provide comprehensive performance analysis for HPC environments. Currently supporting storage performance testing via FIO, with an ambitious roadmap for complete cluster performance evaluation capabilities.
