@@ -22,17 +22,12 @@ Section: utils
 Priority: optional
 Architecture: amd64
 Maintainer: Kenneth Sheridan <you@example.com>
-Description: System performance benchmarking and metrics server built in Rust
+Description: Static Rust system performance server
 EOF
   '';
 
   buildPhase = ''
     dpkg-deb --build $out $out/sysperf-svr.deb
-  '';
-
-  installCheckPhase = ''
-    echo "Built .deb package:"
-    ls -lh $out/sysperf-svr.deb
   '';
 
   dontFixup = true;
