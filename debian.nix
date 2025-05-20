@@ -8,20 +8,22 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ dpkg makeWrapper ];
 
-  installPhase = ''
-    mkdir -p $out/DEBIAN
-    mkdir -p $out/usr/bin
+installPhase = ''
+  mkdir -p $TMP/deb/usr/bin
+  mkdir -p $TMP/deb/DEBIAN
 
-    cp ${sysperf-svr}/bin/sysperf-svr $out/usr/bin/sysperf-svr
+  cp ${sysperf-svr}/bin/sysperf-svr $TMP/deb/usr/bin/
 
-    cat > $out/DEBIAN/control <<EOF
+  cat > $TMP/deb/DEBIAN/control <<EOF
 Package: sysperf-svr
 Version: 0.1.0
 Architecture: amd64
 Maintainer: kennethdsheridan@gmail.com
-Description: Static sysperf service for Linux.
+Description: Statically linked sysperf-svr service.
 EOF
-  '';
+
+  dpkg-deb --build $TMP/deb $out/sysperf-svr_0.1.0_amd64.deb
+'';
 
   dontBuild = true;
 }
