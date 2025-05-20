@@ -1,7 +1,7 @@
-{ lib, stdenv, dpkg, makeWrapper, sysperf-svr }:
+{ lib, stdenv, dpkg, sysperf-svr }:
 
 stdenv.mkDerivation {
-  pname = "sysperf-svr-deb";
+  pname = "sysperf-svr";
   version = "0.1.0";
   src = sysperf-svr;
 
@@ -21,11 +21,12 @@ Maintainer: kennethdsheridan@gmail.com
 Description: Statically linked sysperf-svr service.
 EOF
 
-    dpkg-deb --build $TMP/deb ${placeholder "out"}/sysperf-svr_0.1.0_amd64.deb
+    dpkg-deb --build $TMP/deb ${placeholder "out"}
   '';
 
   dontUnpack = true;
   dontBuild = true;
+
   outputHashMode = "flat";
   outputHashAlgo = "sha256";
 }
