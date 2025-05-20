@@ -1,5 +1,5 @@
 {
-  description = "sysperf-svr: Native Rust service with .deb and .tar.gz packaging";
+  description = "sysperf-svr: statically linked musl Rust binary packaged as .deb";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -9,8 +9,15 @@
   outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
-        rustPlatform = pkgs.rustPlatform;
+        # Cross compile for musl
+        pkgs = import nixpkgs {
+          inherit system;
+          crossSystem = {
+            config = "x86_64-unknown-linux-musl";
+          };
+        };
+
+        rustPlatform = pkgs.buildPackages.rustPlatform;
 
         sysperf-svr = rustPlatform.buildRustPackage {
           pname = "sysperf-svr";
@@ -21,26 +28,49 @@
             lockFile = ./Cargo.lock;
           };
 
+          # Enable static build
+          cargoBuildFlags = [ "--release" ];
+          RUSTFLAGS = "-C target-feature=+crt-static";
           doCheck = false;
         };
 
-        tarball = pkgs.runCommand "sysperf-svr-tarball" {
-          nativeBuildInputs = [ pkgs.gzip ];
-        } ''
-          mkdir -p $out
-          cp ${sysperf-svr}/bin/sysperf-svr ./sysperf-svr
-          tar -czf $out/sysperf-svr.tar.gz sysperf-svr
-        '';
+        deb = pkgs.stdenv.mkDerivation {
+          pname = "sysperf-svr-deb";
+          version = "0.1.0";
+          src = sysperf-svr;
 
-        deb = pkgs.callPackage ./debian.nix { inherit sysperf-svr; };
+          nativeBuildInputs = [ pkgs.dpkg ];
+
+          installPhase = ''
+            mkdir -p $TMP/deb/usr/bin
+            mkdir -p $TMP/deb/DEBIAN
+
+            cp ${sysperf-svr}/bin/sysperf-svr $TMP/deb/usr/bin/
+
+            cat > $TMP/deb/DEBIAN/control <<EOF
+Package: sysperf-svr
+Version: 0.1.0
+Architecture: amd64
+Maintainer: kennethdsheridan@gmail.com
+Description: Statically linked sysperf-svr service.
+EOF
+
+            dpkg-deb --build $TMP/deb $out
+          '';
+
+          dontUnpack = true;
+          dontBuild = true;
+        };
 
       in {
         packages.default = sysperf-svr;
-        packages.tarball = tarball;
         packages.deb = deb;
 
-        devShells.default = pkgs.mkShell {
-          packages = [ pkgs.rustc pkgs.cargo ];
+        devShells.default = pkgs.buildPackages.mkShell {
+          packages = [
+            pkgs.buildPackages.rustc
+            pkgs.buildPackages.cargo
+          ];
         };
       });
 }
