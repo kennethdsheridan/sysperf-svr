@@ -1,7 +1,7 @@
 # SysPerf: A Supercomputing Benchmark Framework
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-SysPerf is an evolving supercomputing benchmark framework designed to provide comprehensive performance analysis for HPC environments. Currently supporting storage performance testing via FIO, with an ambitious roadmap for complete cluster performance evaluation capabilities.
+SysPerf is a supercomputing benchmark framework designed to provide comprehensive performance analysis for HPC environments. Currently supporting storage performance testing via FIO, with a roadmap for complete cluster performance evaluation capabilities.
 
 ## On-deck Features
 
@@ -13,14 +13,14 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - IOPS and throughput measurements
   - Latency analysis
   - Queue depth impact assessment
-  
+
 - **Results Processing**
   - Real-time metric collection
   - Embedded database storage
   - Basic visualization capabilities
   - JSON/CSV export options
 
-## Roadmap 
+## Roadmap
 
 ### Network Performance 
 - [ ] InfiniBand Testing Suite
@@ -28,7 +28,7 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - Subnet Manager performance
   - QoS validation
   - Network congestion testing
-  
+
 - [ ] Network Tools Integration
   - iperf3 TCP/UDP testing
   - perftest RDMA metrics
@@ -41,7 +41,7 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - NVIDIA NCCL tests
   - GPU-Direct RDMA
   - Multi-node GPU communication
-  
+
 - [ ] ML/AI Performance Suite
   - Distributed training metrics
   - Model inference benchmarks
@@ -54,7 +54,7 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - GPFS throughput analysis
   - BeeGFS benchmarking
   - Metadata performance testing
-  
+
 - [ ] Extended I/O Testing
   - IOR integration
   - mdtest implementation
@@ -75,39 +75,110 @@ SysPerf is an evolving supercomputing benchmark framework designed to provide co
   - Resource optimization
   - Trend analysis
 
-
 ## Quick Start
 
 ### Prerequisites
-- Rust 1.70 or higher
-- FIO 3.x or higher
-- Linux kernel 4.x or higher
 
-### Installation
+- Rust 1.70+ (if building with Cargo)
+- Linux system with kernel 4.x or higher
+- `nix` (if building from flakes)
+
+---
+
+## Installation & Build Options
+
+### Option 1: Build with Nix (Recommended)
+
+SysPerf uses [Nix](https://nixos.org/) to produce statically linked binaries, `.deb` packages for Debian/Ubuntu, and `.tar.gz` archives.
+
+#### 1. Install Nix
+
+```bash
+sh <(curl -L https://nixos.org/nix/install)
+````
+
+Enable flakes:
+
+```bash
+mkdir -p ~/.config/nix
+echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
+```
+
+#### 2. Build the Static Binary
+
+```bash
+nix build . --extra-experimental-features 'nix-command flakes'
+```
+
+Output:
+
+```
+result/bin/sysperf-svr
+```
+
+#### 3. Build and Install a .deb Package (Debian/Ubuntu)
+
+```bash
+nix build .#deb --extra-experimental-features 'nix-command flakes'
+cp result sysperf-svr_0.1.0_amd64.deb
+sudo dpkg -i sysperf-svr_0.1.0_amd64.deb
+```
+
+Installs the binary to `/usr/bin/sysperf-svr`.
+
+#### 4. Build a .tar.gz Archive (Portable)
+
+```bash
+nix build .#tarball --extra-experimental-features 'nix-command flakes'
+```
+
+Output:
+
+```
+result/sysperf-svr.tar.gz
+```
+
+#### 5. Optional: Development Shell
+
+```bash
+nix develop --extra-experimental-features 'nix-command flakes'
+```
+
+---
+
+### Option 2: Build with Cargo (for development)
 
 ```bash
 # Clone the repository
 git clone https://github.com/kennethdsheridan/sysperf-svr
 cd sysperf-svr
 
-# Build the project
+# Build
 cargo build --release
 
 # Run tests
 cargo test
 ```
 
-### Basic Usage
+Output binary will be located at:
+
+```
+./target/release/sysperf-svr
+```
+
+---
+
+## Basic Usage
 
 ```bash
 # Run basic FIO test
-./target/release/sysperf-svr benchmark --tool fio --test-type random-read
+sysperf-svr benchmark --tool fio --test-type random-read
 
 # Run comprehensive storage benchmark
-./target/release/sysperf-svr storage-suite
+sysperf-svr storage-suite
 
 # View results
-./target/release/sysperf-svr results --latest
+sysperf-svr results --latest
 ```
 
 ## Configuration
@@ -143,89 +214,64 @@ database:
     url: "http://metrics-db:8086"
 ```
 
+---
+
 ## Architecture
 
-The project follows a Ports and Adapters (Hexagonal) architecture pattern:
+The project follows a Ports and Adapters (Hexagonal) architecture:
 
 ```
 sysperf-svr/
 ├── src/
-│   ├── ports/                  # Interface definitions
-│   │   ├── application_port.rs # Core application interfaces
-│   │   ├── database_port.rs    # Database abstraction
-│   │   ├── discovery_port.rs   # Service discovery interfaces
-│   │   ├── log_port.rs        # Logging interfaces
-│   │   ├── node_metrics_port.rs # System metrics interfaces
-│   │   └── maas_login_port.rs  # Authentication interfaces
-│   │
-│   ├── adapters/              # Concrete implementations
-│   │   ├── application_adapter.rs # Core application logic
-│   │   ├── log_adapter.rs     # Logging implementation
-│   │   ├── maas_discovery_adapter.rs # Service discovery
-│   │   ├── maas_login_adapter.rs # Authentication
-│   │   ├── node_metrics_adapter.rs # System metrics
-│   │   └── surrealdb_adapter.rs # Database implementation
-│   │
-│   ├── cli/                   # Command line interface
-│   └── main.rs                # Application entry point
-│
-├── config/                    # Configuration files
-└── tests/                    # Integration tests
+│   ├── ports/
+│   ├── adapters/
+│   ├── cli/
+│   └── main.rs
+├── config/
+└── tests/
 ```
 
 ### Architectural Approach
 
-The project uses a Ports and Adapters (Hexagonal) architecture that provides:
+* **Ports Layer**: Trait-based interfaces for benchmarking, metrics, database, and system integration
+* **Adapters Layer**: Modular, swappable implementations
 
-- **Ports Layer**: Trait-based interfaces that abstract core functionality
-  - Benchmarking ports
-  - Metric collection ports
-  - Database interaction ports
-  - Node communication ports
-  - Hardware management ports
+Key benefits:
 
-- **Adapters Layer**: Concrete implementations that are hot-swappable
-  - FIO benchmarking adapters
-  - Hardware metric collectors
-  - SurrealDB persistence adapter
-  - MAAS integration adapters
-  - Logging implementations
+* Component independence
+* Testability through interface abstraction
+* Flexible extension through adapter plug-ins
 
-### Key Benefits
+---
 
-- Component independence and hot-swappability
-- Simplified testing through trait mocking
-- High availability through adapter redundancy
-- Easy extension of functionality
-- Clear separation of concerns
+## Current Status
 
-### Current Implementation Status
+**Stable:**
 
-- **Stable**
-  - Storage benchmarking ports and adapters (FIO)
-  - Basic metric collection
-  - Database integration
-  
-- **In Development**
-  - Network testing ports
-  - GPU benchmarking interfaces
-  - Additional storage adapters
+* Storage benchmarking (FIO)
+* Basic metric collection
+* Embedded database integration
 
-### Development Focus Areas
-1. Network testing implementation
-2. GPU benchmark integration
-3. Visualization improvements
-4. Documentation
-5. Test coverage
+**In Development:**
+
+* Network and GPU benchmarking
+* Job scheduler integration
+* Result visualization
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file.
+
+---
 
 ## Acknowledgments
 
-- The HPC community
-- The Rust community
+* The HPC community
+* The Rust community
+
+---
 
 ## Citation
 
@@ -235,14 +281,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   title = {SysPerf: Supercomputing Benchmark Framework},
   year = {2024},
   publisher = {GitHub},
-  url = {https://github.com/kenetthdsheridan/sysperf-svr}
+  url = {https://github.com/kennethdsheridan/sysperf-svr}
 }
 ```
-
-## Project Status
-
-- **Stable**: FIO-based storage testing
-- **Alpha**: Basic metric collection and visualization
-- **Planning**: All other features
 
 
