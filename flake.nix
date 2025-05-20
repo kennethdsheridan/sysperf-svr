@@ -18,7 +18,6 @@
         };
 
         rustPlatform = pkgs.buildPackages.rustPlatform;
-
         sysperf-svr = rustPlatform.buildRustPackage {
           pname = "sysperf-svr";
           version = "0.1.0";
@@ -28,11 +27,13 @@
             lockFile = ./Cargo.lock;
           };
 
-          # Enable static build
-          cargoBuildFlags = [ "--release" ];
-          RUSTFLAGS = "-C target-feature=+crt-static";
-          doCheck = false;
-        };
+  # REMOVE THIS ↓
+  # cargoBuildFlags = [ "--release" ];
+
+  RUSTFLAGS = "-C target-feature=+crt-static";
+  doCheck = false;
+};
+
 
         deb = pkgs.stdenv.mkDerivation {
           pname = "sysperf-svr-deb";
