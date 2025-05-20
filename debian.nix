@@ -1,35 +1,28 @@
-{ stdenv, dpkg, sysperf-svr }:
+{ lib, stdenv, dpkg, makeWrapper, sysperf-svr }:
 
 stdenv.mkDerivation {
-  pname = "sysperf-svr";
+  pname = "sysperf-svr-deb";
   version = "0.1.0";
+
   src = sysperf-svr;
 
-  buildInputs = [ dpkg ];
-
-  unpackPhase = "true"; # skip unpack
+  nativeBuildInputs = [ dpkg makeWrapper ];
 
   installPhase = ''
     mkdir -p $out/DEBIAN
-    mkdir -p $out/usr/local/bin
+    mkdir -p $out/usr/bin
 
-    cp -v ${sysperf-svr}/bin/sysperf-svr $out/usr/local/bin/
+    cp ${sysperf-svr}/bin/sysperf-svr $out/usr/bin/sysperf-svr
 
     cat > $out/DEBIAN/control <<EOF
 Package: sysperf-svr
 Version: 0.1.0
-Section: utils
-Priority: optional
 Architecture: amd64
-Maintainer: Kenneth Sheridan <you@example.com>
-Description: Static Rust system performance server
+Maintainer: kennethdsheridan@gmail.com
+Description: Static sysperf service for Linux.
 EOF
   '';
 
-  buildPhase = ''
-    dpkg-deb --build $out $out/sysperf-svr.deb
-  '';
-
-  dontFixup = true;
+  dontBuild = true;
 }
 
