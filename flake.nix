@@ -1,5 +1,5 @@
 {
-  description = "sysperf-svr: statically linked musl Rust binary packaged as .deb";
+  description = "sysperf-svr: musl-static Rust binary + .deb packaging";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -9,16 +9,14 @@
   outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        # Cross compile for musl
+        # Use musl64 cross compilation environment
         pkgs = import nixpkgs {
           inherit system;
-          crossSystem = {
-            config = "x86_64-unknown-linux-musl";
-          };
         };
 
-        rustPlatform = pkgs.buildPackages.rustPlatform;
-        sysperf-svr = rustPlatform.buildRustPackage {
+        muslPkgs = pkgs.pkgsCross.musl64;
+
+        sysperf-svr = muslPkgs.rustPlatform.buildRustPackage {
           pname = "sysperf-svr";
           version = "0.1.0";
           src = ./.;
@@ -27,13 +25,10 @@
             lockFile = ./Cargo.lock;
           };
 
-  # REMOVE THIS ↓
-  # cargoBuildFlags = [ "--release" ];
+          RUSTFLAGS = "-C target-feature=+crt-static";
 
-  RUSTFLAGS = "-C target-feature=+crt-static";
-  doCheck = false;
-};
-
+          doCheck = false;
+        };
 
         deb = pkgs.stdenv.mkDerivation {
           pname = "sysperf-svr-deb";
@@ -67,10 +62,10 @@ EOF
         packages.default = sysperf-svr;
         packages.deb = deb;
 
-        devShells.default = pkgs.buildPackages.mkShell {
+        devShells.default = muslPkgs.mkShell {
           packages = [
-            pkgs.buildPackages.rustc
-            pkgs.buildPackages.cargo
+            muslPkgs.rustc
+            muslPkgs.cargo
           ];
         };
       });
